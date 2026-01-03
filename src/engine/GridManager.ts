@@ -15,6 +15,7 @@ import {
 import { getWordValidator } from './WordValidator';
 import { getScoreCalculator } from './ScoreCalculator';
 import { getDictionary } from '../data/dictionaries';
+import { logger } from '../utils/logger';
 
 /**
  * Placement candidate for word placement scoring
@@ -104,14 +105,14 @@ export class GridManager {
    * Ensures at least minWords valid words are present on the board
    */
   initialize(minWords: number = 6): Tile[][] {
-    console.log(`[GridManager:initialize] Starting board initialization (minWords: ${minWords}, size: ${this.size}, lang: ${this.language})`);
+    logger.log(`[GridManager:initialize] Starting board initialization (minWords: ${minWords}, size: ${this.size}, lang: ${this.language})`);
     this.grid = [];
     this.idCounter = 0;
 
     // Seed words on the board to ensure at least minWords are present
     this.seedWordsOnBoard(minWords);
 
-    console.log(`[GridManager:initialize] Board initialization complete`);
+    logger.log(`[GridManager:initialize] Board initialization complete`);
     this.logBoardState('Final board');
     return this.grid;
   }
@@ -121,26 +122,26 @@ export class GridManager {
    */
   private logBoardState(label: string): void {
     if (this.grid.length === 0) {
-      console.log(`[GridManager:Board] ${label}: (empty grid)`);
+      logger.log(`[GridManager:Board] ${label}: (empty grid)`);
       return;
     }
 
     const border = '┌' + '───'.repeat(this.size) + '┐';
     const bottomBorder = '└' + '───'.repeat(this.size) + '┘';
 
-    console.log(`[GridManager:Board] ${label}:`);
-    console.log(border);
+    logger.log(`[GridManager:Board] ${label}:`);
+    logger.log(border);
 
     for (let row = 0; row < this.size; row++) {
       const rowLetters = this.grid[row].map(tile => ` ${tile.letter} `).join('');
-      console.log(`│${rowLetters}│`);
+      logger.log(`│${rowLetters}│`);
     }
 
-    console.log(bottomBorder);
+    logger.log(bottomBorder);
 
     // Also log as a simple string for easier parsing
     const allLetters = this.grid.flatMap(row => row.map(tile => tile.letter)).join('');
-    console.log(`[GridManager:Board] All letters: ${allLetters}`);
+    logger.log(`[GridManager:Board] All letters: ${allLetters}`);
   }
 
   /**
@@ -285,7 +286,7 @@ export class GridManager {
     for (const pos of positions) {
       // Bounds validation to prevent crashes
       if (pos.row < 0 || pos.row >= this.size || pos.col < 0 || pos.col >= this.size) {
-        console.warn(`[clearSelectedPositions] Invalid position: ${pos.row},${pos.col}`);
+        logger.warn(`[clearSelectedPositions] Invalid position: ${pos.row},${pos.col}`);
         continue;
       }
 
@@ -391,7 +392,7 @@ export class GridManager {
         movedTiles.push({ row: wordPlacement.row, col });
         placedPositions.add(`${wordPlacement.row}-${col}`);
       }
-      console.log(`[GridManager:applyGravity] Placed word "${wordPlacement.word}" at row ${wordPlacement.row}, cols [${wordPlacement.cols.join(', ')}]`);
+      logger.log(`[GridManager:applyGravity] Placed word "${wordPlacement.word}" at row ${wordPlacement.row}, cols [${wordPlacement.cols.join(', ')}]`);
     }
 
     // Fill remaining empty positions with random tiles
@@ -414,7 +415,7 @@ export class GridManager {
   private createTile(row: number, col: number): Tile {
     const letter = this.getRandomLetter();
     const tileId = `tile-${++this.idCounter}`;
-    console.log(`[GridManager:createTile] Created tile at (${row},${col}): '${letter}' [${tileId}]`);
+    logger.log(`[GridManager:createTile] Created tile at (${row},${col}): '${letter}' [${tileId}]`);
     return {
       id: tileId,
       letter,
@@ -431,7 +432,7 @@ export class GridManager {
    */
   private createTileWithLetter(row: number, col: number, letter: string): Tile {
     const tileId = `tile-${++this.idCounter}`;
-    console.log(`[GridManager:createTileWithLetter] Created tile at (${row},${col}): '${letter}' [${tileId}] (word placement)`);
+    logger.log(`[GridManager:createTileWithLetter] Created tile at (${row},${col}): '${letter}' [${tileId}] (word placement)`);
     return {
       id: tileId,
       letter,
@@ -475,14 +476,14 @@ export class GridManager {
     for (let i = 0; i < letters.length; i++) {
       random -= weights[i];
       if (random <= 0) {
-        console.log(`[GridManager:getRandomLetter] Generated: '${letters[i]}' (lang: ${this.language}, weight: ${weights[i].toFixed(2)}, roll: ${initialRandom.toFixed(2)}/${totalWeight.toFixed(2)})`);
+        logger.log(`[GridManager:getRandomLetter] Generated: '${letters[i]}' (lang: ${this.language}, weight: ${weights[i].toFixed(2)}, roll: ${initialRandom.toFixed(2)}/${totalWeight.toFixed(2)})`);
         return letters[i];
       }
     }
 
     // Fallback to most common letter based on language
     const fallbackLetter = this.language === 'pl' ? 'A' : 'E';
-    console.warn(`[GridManager:getRandomLetter] FALLBACK triggered, returning '${fallbackLetter}' (lang: ${this.language})`);
+    logger.warn(`[GridManager:getRandomLetter] FALLBACK triggered, returning '${fallbackLetter}' (lang: ${this.language})`);
     return fallbackLetter;
   }
 
@@ -608,7 +609,7 @@ export class GridManager {
       const state = this.buildCrossword(suitableWords, minWords);
 
       if (state.placedWords.length >= minWords) {
-        console.log(`[generateCrossword] Success with ${state.placedWords.length} words in ${attempt + 1} attempts`);
+        logger.log(`[generateCrossword] Success with ${state.placedWords.length} words in ${attempt + 1} attempts`);
         return state;
       }
 
@@ -619,13 +620,13 @@ export class GridManager {
 
       // Early termination if we're close enough (5+ words)
       if (bestState && bestState.placedWords.length >= minWords - 1) {
-        console.log(`[generateCrossword] Early termination with ${bestState.placedWords.length} words`);
+        logger.log(`[generateCrossword] Early termination with ${bestState.placedWords.length} words`);
         return bestState;
       }
     }
 
     // Return best attempt even if below minWords
-    console.log(`[generateCrossword] Best attempt: ${bestState?.placedWords.length || 0} words`);
+    logger.log(`[generateCrossword] Best attempt: ${bestState?.placedWords.length || 0} words`);
     return bestState || this.createEmptyCrosswordState();
   }
 
@@ -971,11 +972,11 @@ export class GridManager {
     const placedLetters: string[] = [];
     const randomLetters: string[] = [];
 
-    console.log(`[GridManager:crosswordStateToGrid] Converting crossword state to grid (${state.placedWords.length} words placed)`);
-    console.log(`[GridManager:crosswordStateToGrid] Placed words:`);
+    logger.log(`[GridManager:crosswordStateToGrid] Converting crossword state to grid (${state.placedWords.length} words placed)`);
+    logger.log(`[GridManager:crosswordStateToGrid] Placed words:`);
     state.placedWords.forEach((pw, idx) => {
       const dirSymbol = pw.direction === 'horizontal' ? '→' : '↓';
-      console.log(`  ${idx + 1}. "${pw.word}" at (${pw.startRow},${pw.startCol}) ${dirSymbol} ${pw.direction}`);
+      logger.log(`  ${idx + 1}. "${pw.word}" at (${pw.startRow},${pw.startCol}) ${dirSymbol} ${pw.direction}`);
     });
 
     for (let row = 0; row < this.size; row++) {
@@ -1002,8 +1003,8 @@ export class GridManager {
       }
     }
 
-    console.log(`[GridManager:crosswordStateToGrid] Letters from words (${placedLetters.length}): ${placedLetters.join('')}`);
-    console.log(`[GridManager:crosswordStateToGrid] Random fill letters (${randomLetters.length}): ${randomLetters.join('')}`);
+    logger.log(`[GridManager:crosswordStateToGrid] Letters from words (${placedLetters.length}): ${placedLetters.join('')}`);
+    logger.log(`[GridManager:crosswordStateToGrid] Random fill letters (${randomLetters.length}): ${randomLetters.join('')}`);
     this.logBoardState('After crossword conversion');
   }
 
@@ -1102,7 +1103,7 @@ export class GridManager {
     direction: 'horizontal' | 'vertical'
   ): void {
     const dirSymbol = direction === 'horizontal' ? '→' : '↓';
-    console.log(`[GridManager:commitPlacement] Placing "${word}" at (${startRow},${startCol}) ${dirSymbol} ${direction}`);
+    logger.log(`[GridManager:commitPlacement] Placing "${word}" at (${startRow},${startCol}) ${dirSymbol} ${direction}`);
     for (let i = 0; i < word.length; i++) {
       const row = direction === 'horizontal' ? startRow : startRow + i;
       const col = direction === 'horizontal' ? startCol + i : startCol;
@@ -1378,7 +1379,7 @@ export class GridManager {
 
       const foundWords = this.findAllWords();
       if (foundWords.length >= minWords) {
-        console.log(`[GridManager] Systematic fallback succeeded with ${foundWords.length} words in ${fallbackAttempts + 1} attempts`);
+        logger.log(`[GridManager] Systematic fallback succeeded with ${foundWords.length} words in ${fallbackAttempts + 1} attempts`);
         return;
       }
 
@@ -1386,7 +1387,7 @@ export class GridManager {
     }
 
     // Final fallback: log warning but don't throw (game should still be playable)
-    console.warn(`[GridManager] Warning: Could not guarantee ${minWords} words after all fallback attempts`);
+    logger.warn(`[GridManager] Warning: Could not guarantee ${minWords} words after all fallback attempts`);
   }
 
   /**
@@ -1408,7 +1409,7 @@ export class GridManager {
 
       // Validate: Check how many words are on the board
       const foundWords = this.findAllWords();
-      console.log(`[GridManager] Crossword algorithm placed ${crosswordState.placedWords.length} words, found ${foundWords.length} valid words`);
+      logger.log(`[GridManager] Crossword algorithm placed ${crosswordState.placedWords.length} words, found ${foundWords.length} valid words`);
 
       if (foundWords.length >= minWords) {
         return;
@@ -1416,7 +1417,7 @@ export class GridManager {
     }
 
     // Fallback to old multi-phase approach if crossword algorithm fails
-    console.log(`[GridManager] Crossword algorithm insufficient (${crosswordState.placedWords.length} words), using fallback`);
+    logger.log(`[GridManager] Crossword algorithm insufficient (${crosswordState.placedWords.length} words), using fallback`);
 
     const dictionary = getDictionary(this.language);
     const seedableWords = dictionary.filter(w => w.length >= 3 && w.length <= 5);
@@ -1448,7 +1449,7 @@ export class GridManager {
       const foundWords = this.findAllWords();
 
       if (foundWords.length >= minWords) {
-        console.log(`[GridManager] Fallback seeded ${foundWords.length} words in ${attempts + 1} attempts`);
+        logger.log(`[GridManager] Fallback seeded ${foundWords.length} words in ${attempts + 1} attempts`);
         return;
       }
 
@@ -1456,7 +1457,7 @@ export class GridManager {
     }
 
     // Phase 5: Systematic fallback (GUARANTEED approach)
-    console.log(`[GridManager] Random attempts exhausted, using systematic fallback`);
+    logger.log(`[GridManager] Random attempts exhausted, using systematic fallback`);
     this.systematicFallback(minWords);
   }
 
@@ -1557,9 +1558,9 @@ export class GridManager {
     }
 
     if (filledCells.length > 0) {
-      console.log(`[GridManager:fillEmptyCells] Filled ${filledCells.length} empty cells:`);
+      logger.log(`[GridManager:fillEmptyCells] Filled ${filledCells.length} empty cells:`);
       const lettersOnly = filledCells.map(c => c.letter).join('');
-      console.log(`[GridManager:fillEmptyCells] Generated letters: ${lettersOnly}`);
+      logger.log(`[GridManager:fillEmptyCells] Generated letters: ${lettersOnly}`);
       this.logBoardState('After fillEmptyCells');
     }
   }
@@ -1918,16 +1919,16 @@ export class GridManager {
       const wordCount = this.getSelectableWordCount();
 
       if (wordCount >= minWords) {
-        console.log(`[ensureMinimumWords] Grid has ${wordCount} selectable words (attempt ${attempt + 1})`);
+        logger.log(`[ensureMinimumWords] Grid has ${wordCount} selectable words (attempt ${attempt + 1})`);
         return true;
       }
 
       // Not enough words - regenerate the entire grid
-      console.log(`[ensureMinimumWords] Only ${wordCount} words, regenerating (attempt ${attempt + 1})`);
+      logger.log(`[ensureMinimumWords] Only ${wordCount} words, regenerating (attempt ${attempt + 1})`);
       this.regenerateGrid();
     }
 
-    console.warn(`[ensureMinimumWords] Could not achieve ${minWords} words after ${maxAttempts} attempts`);
+    logger.warn(`[ensureMinimumWords] Could not achieve ${minWords} words after ${maxAttempts} attempts`);
     return false;
   }
 

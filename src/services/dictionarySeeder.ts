@@ -13,6 +13,7 @@ import {
   getWordCount,
 } from '../db/dictionaryDb';
 import { initDatabase } from '../db';
+import { logger } from '../utils/logger';
 
 // Dictionary file imports
 import { words as englishWords } from '../../dictonary/eng';
@@ -69,7 +70,7 @@ export async function seedDictionaryIfNeeded(
   // Already seeded with same language - skip
   if (isSeeded && seededLanguage === language) {
     const wordCount = getWordCount();
-    console.log(
+    logger.log(
       `[DictionarySeeder] Already seeded with ${language}, ${wordCount} words`
     );
     return {
@@ -82,14 +83,14 @@ export async function seedDictionaryIfNeeded(
 
   // Need to reseed - clear existing if any
   if (isSeeded) {
-    console.log(
+    logger.log(
       `[DictionarySeeder] Language changed from ${seededLanguage} to ${language}, reseeding...`
     );
     await clearDictionary();
   }
 
   // Load and seed dictionary
-  console.log(`[DictionarySeeder] Seeding dictionary for ${language}...`);
+  logger.log(`[DictionarySeeder] Seeding dictionary for ${language}...`);
   const startTime = Date.now();
 
   const dictionary = getDictionaryForLanguage(language);
@@ -99,7 +100,7 @@ export async function seedDictionaryIfNeeded(
   await setSeededLanguage(language);
 
   const duration = Date.now() - startTime;
-  console.log(
+  logger.log(
     `[DictionarySeeder] Seeded ${wordCount} words in ${duration}ms`
   );
 
@@ -117,7 +118,7 @@ export async function seedDictionaryIfNeeded(
 export async function forceReseedDictionary(
   language: Language
 ): Promise<SeedResult> {
-  console.log(`[DictionarySeeder] Force reseeding with ${language}...`);
+  logger.log(`[DictionarySeeder] Force reseeding with ${language}...`);
 
   // Ensure database is initialized before operations
   await initDatabase();

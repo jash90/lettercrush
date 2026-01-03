@@ -17,6 +17,7 @@ import { getWordValidator } from '../engine/WordValidator';
 import { initDatabase, getHighestScore } from '../db';
 import { loadDictionaryForLanguage } from './useDictionary';
 import type { Language } from '../types/game.types';
+import { logger } from '../utils/logger';
 
 interface UseGameInitOptions {
   /** Whether to auto-initialize on mount */
@@ -122,7 +123,7 @@ export function useGameInit(options: UseGameInitOptions = {}): UseGameInitReturn
     } catch (err) {
       const initError = err instanceof Error ? err : new Error('Failed to initialize game');
       setError(initError);
-      console.error('[useGameInit] Initialization error:', initError);
+      logger.error('[useGameInit] Initialization error:', initError);
       // Keep dictionary marked as not ready on error
       gameActions.setDictionaryReady(false);
     } finally {
@@ -181,7 +182,7 @@ export function useGameInit(options: UseGameInitOptions = {}): UseGameInitReturn
     } catch (err) {
       const langError = err instanceof Error ? err : new Error('Failed to change language');
       setError(langError);
-      console.error('[useGameInit] Language change error:', langError);
+      logger.error('[useGameInit] Language change error:', langError);
       // Keep dictionary marked as not ready on error
       gameActions.setDictionaryReady(false);
     } finally {

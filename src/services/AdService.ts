@@ -8,6 +8,7 @@ import mobileAds, {
   AdEventType,
 } from 'react-native-google-mobile-ads';
 import { adConfig } from '../config/adConfig';
+import { logger } from '../utils/logger';
 
 export interface AdServiceState {
   isInitialized: boolean;
@@ -38,7 +39,7 @@ class AdService {
     try {
       // CRITICAL: Initialize the Google Mobile Ads SDK first
       await mobileAds().initialize();
-      console.log('[AdService] SDK initialized');
+      logger.log('[AdService] SDK initialized');
 
       // Create interstitial ad instance
       this.interstitial = InterstitialAd.createForAdRequest(
@@ -55,9 +56,9 @@ class AdService {
       }
 
       this.updateState({ isInitialized: true });
-      console.log('[AdService] Initialized successfully');
+      logger.log('[AdService] Initialized successfully');
     } catch (error) {
-      console.error('[AdService] Initialization failed:', error);
+      logger.error('[AdService] Initialization failed:', error);
       this.updateState({
         isInitialized: false,
         interstitialError: error as Error,
@@ -72,12 +73,12 @@ class AdService {
     if (!this.interstitial) return;
 
     this.interstitial.addAdEventListener(AdEventType.LOADED, () => {
-      console.log('[AdService] Interstitial loaded');
+      logger.log('[AdService] Interstitial loaded');
       this.updateState({ interstitialLoaded: true, interstitialError: null });
     });
 
     this.interstitial.addAdEventListener(AdEventType.ERROR, (error) => {
-      console.error('[AdService] Interstitial error:', error);
+      logger.error('[AdService] Interstitial error:', error);
       this.updateState({
         interstitialLoaded: false,
         interstitialError: error as unknown as Error,
@@ -85,7 +86,7 @@ class AdService {
     });
 
     this.interstitial.addAdEventListener(AdEventType.CLOSED, () => {
-      console.log('[AdService] Interstitial closed');
+      logger.log('[AdService] Interstitial closed');
       // Preload next interstitial
       this.loadInterstitial();
     });
@@ -100,7 +101,7 @@ class AdService {
     try {
       this.interstitial.load();
     } catch (error) {
-      console.error('[AdService] Failed to load interstitial:', error);
+      logger.error('[AdService] Failed to load interstitial:', error);
       this.updateState({ interstitialError: error as Error });
     }
   }
@@ -111,7 +112,7 @@ class AdService {
    */
   async showInterstitial(): Promise<boolean> {
     if (!this.interstitial || !this.state.interstitialLoaded) {
-      console.log('[AdService] Interstitial not ready');
+      logger.log('[AdService] Interstitial not ready');
       return false;
     }
 
@@ -126,14 +127,14 @@ class AdService {
 
       // One-time listener for when ad is closed
       const onClosed = () => {
-        console.log('[AdService] Ad closed - resolving promise');
+        logger.log('[AdService] Ad closed - resolving promise');
         cleanup();
         resolve(true);
       };
 
       // One-time listener for errors during display
       const onError = () => {
-        console.log('[AdService] Ad error during display - resolving promise');
+        logger.log('[AdService] Ad error during display - resolving promise');
         cleanup();
         resolve(false);
       };
@@ -144,7 +145,7 @@ class AdService {
 
       // Show the ad
       this.interstitial!.show().catch((error) => {
-        console.error('[AdService] Failed to show interstitial:', error);
+        logger.error('[AdService] Failed to show interstitial:', error);
         cleanup();
         resolve(false);
       });

@@ -9,6 +9,7 @@ import { getWordValidator } from '../engine/WordValidator';
 import { isDictionarySeeded, loadDictionary, getWordCount, clearDictionary } from '../db';
 import { getDictionary } from '../data/dictionaries';
 import type { Language } from '../types/game.types';
+import { logger } from '../utils/logger';
 
 interface UseDictionaryOptions {
   /** Language to load dictionary for */
@@ -71,7 +72,7 @@ export function useDictionary(options: UseDictionaryOptions): UseDictionaryRetur
         }
       } catch (dbError) {
         // Database errors are non-fatal - validator still works in-memory
-        console.warn('[useDictionary] Database seeding warning:', dbError);
+        logger.warn('[useDictionary] Database seeding warning:', dbError);
       }
 
       currentLanguageRef.current = lang;
@@ -79,7 +80,7 @@ export function useDictionary(options: UseDictionaryOptions): UseDictionaryRetur
     } catch (err) {
       const loadError = err instanceof Error ? err : new Error('Failed to load dictionary');
       setError(loadError);
-      console.error('[useDictionary] Load error:', loadError);
+      logger.error('[useDictionary] Load error:', loadError);
     } finally {
       setIsLoading(false);
     }
@@ -136,6 +137,6 @@ export async function loadDictionaryForLanguage(language: Language): Promise<voi
       await loadDictionary(dictionary);
     }
   } catch (error) {
-    console.warn('[loadDictionaryForLanguage] Database seeding warning:', error);
+    logger.warn('[loadDictionaryForLanguage] Database seeding warning:', error);
   }
 }

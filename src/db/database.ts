@@ -4,6 +4,7 @@
  */
 
 import { Platform } from 'react-native';
+import { logger } from '../utils/logger';
 
 export const isWeb = Platform.OS === 'web';
 
@@ -41,7 +42,7 @@ export async function initDatabase(): Promise<void> {
         localStorage.setItem('lettercrush_dictionary_loaded', 'false');
       }
     }
-    console.log('[Database] Web storage initialized');
+    logger.log('[Database] Web storage initialized');
     return;
   }
 
@@ -69,10 +70,10 @@ export async function initDatabase(): Promise<void> {
         CREATE INDEX IF NOT EXISTS idx_highscores_score ON highscores(score DESC);
       `);
 
-      console.log('[Database] SQLite initialized successfully');
+      logger.log('[Database] SQLite initialized successfully');
     }
   } catch (error) {
-    console.error('[Database] SQLite initialization failed:', error);
+    logger.error('[Database] SQLite initialization failed:', error);
   }
 }
 
@@ -84,7 +85,7 @@ export function closeDatabase(): void {
     try {
       db.closeSync();
     } catch (error) {
-      console.error('[Database] Close failed:', error);
+      logger.error('[Database] Close failed:', error);
     }
     db = null;
   }

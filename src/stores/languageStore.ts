@@ -9,6 +9,7 @@ import { create } from 'zustand';
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import type { Language } from '../types/game.types';
+import { logger } from '../utils/logger';
 // Note: Dictionary loading is handled by _layout.tsx when language changes
 // to avoid race conditions and provide proper loading UI
 
@@ -37,7 +38,7 @@ const storage = {
     try {
       await SecureStore.setItemAsync(key, value);
     } catch (error) {
-      console.warn('[Storage] Failed to save:', error);
+      logger.warn('[Storage] Failed to save:', error);
     }
   },
 };
@@ -62,7 +63,7 @@ export const useLanguageStore = create<LanguageStore>((set, get) => ({
       set({ language });
       // Dictionary loading is triggered by _layout.tsx when language state changes
     } catch (error) {
-      console.error('[LanguageStore] Failed to save language:', error);
+      logger.error('[LanguageStore] Failed to save language:', error);
       // Still update state even if persistence fails
       set({ language });
     }
@@ -80,7 +81,7 @@ export const useLanguageStore = create<LanguageStore>((set, get) => ({
 
       set({ language, isLoaded: true, isFirstRun });
     } catch (error) {
-      console.error('[LanguageStore] Failed to load language:', error);
+      logger.error('[LanguageStore] Failed to load language:', error);
       set({ isLoaded: true, isFirstRun: true });
     }
   },
@@ -90,7 +91,7 @@ export const useLanguageStore = create<LanguageStore>((set, get) => ({
       await storage.setItem(FIRST_RUN_KEY, 'complete');
       set({ isFirstRun: false });
     } catch (error) {
-      console.error('[LanguageStore] Failed to save first run state:', error);
+      logger.error('[LanguageStore] Failed to save first run state:', error);
       // Still update state even if persistence fails
       set({ isFirstRun: false });
     }

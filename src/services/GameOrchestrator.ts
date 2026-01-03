@@ -9,6 +9,7 @@ import { getGridManager } from '../engine/GridManager';
 import { getScoreCalculator } from '../engine/ScoreCalculator';
 import { getWordValidator } from '../engine/WordValidator';
 import { saveHighscore } from '../db';
+import { logger } from '../utils/logger';
 
 /** Animation timing configuration */
 export interface AnimationConfig {
@@ -142,7 +143,7 @@ class GameOrchestrator {
     // This uses DFS to find all 8-directional adjacent word paths
     const selectableWordCount = manager.getSelectableWordCount();
     if (selectableWordCount < 6) {
-      console.log(`[GameOrchestrator] Only ${selectableWordCount} words available, regenerating grid`);
+      logger.log(`[GameOrchestrator] Only ${selectableWordCount} words available, regenerating grid`);
       manager.ensureMinimumWords(6);
       callbacks.onGridUpdate(manager.getGrid());
     }
@@ -164,7 +165,7 @@ class GameOrchestrator {
       try {
         await saveHighscore(newScore, state.moves + 1);
       } catch (err) {
-        console.error('[GameOrchestrator] Failed to save highscore:', err);
+        logger.error('[GameOrchestrator] Failed to save highscore:', err);
       }
     }
 

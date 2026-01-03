@@ -6,6 +6,7 @@
 import { isWeb } from './platform';
 import { getDatabase } from './database';
 import type { HighScoreEntry } from '../types/game.types';
+import { logger } from '../utils/logger';
 
 // LocalStorage key for web
 const HIGHSCORES_KEY = 'lettercrush_highscores';
@@ -56,7 +57,7 @@ export async function saveHighscore(score: number, moves: number = 0): Promise<n
       highscores.length = 100;
     }
     saveWebHighscores(highscores);
-    console.log(`[Highscore] Web: Saved score ${score}`);
+    logger.log(`[Highscore] Web: Saved score ${score}`);
     return newId;
   }
 
@@ -67,7 +68,7 @@ export async function saveHighscore(score: number, moves: number = 0): Promise<n
     'INSERT INTO highscores (score, moves) VALUES (?, ?)',
     [score, moves]
   );
-  console.log(`[Highscore] SQLite: Saved score ${score}`);
+  logger.log(`[Highscore] SQLite: Saved score ${score}`);
   return result.lastInsertRowId;
 }
 
@@ -178,7 +179,7 @@ export function getAverageScore(): number {
 export async function clearHighscores(): Promise<void> {
   if (isWeb) {
     localStorage.setItem(HIGHSCORES_KEY, JSON.stringify([]));
-    console.log('[Highscore] Web: Cleared all highscores');
+    logger.log('[Highscore] Web: Cleared all highscores');
     return;
   }
 
@@ -186,5 +187,5 @@ export async function clearHighscores(): Promise<void> {
   if (!database) return;
 
   await database.execAsync('DELETE FROM highscores');
-  console.log('[Highscore] SQLite: Cleared all highscores');
+  logger.log('[Highscore] SQLite: Cleared all highscores');
 }

@@ -19,6 +19,7 @@ import { seedDictionaryIfNeeded } from '../src/services/dictionarySeeder';
 import { initDatabase } from '../src/db';
 import { getAdService } from '../src/services/AdService';
 import { colors } from '../src/theme';
+import { logger } from '../src/utils/logger';
 
 export default function RootLayout() {
   const [isReady, setIsReady] = useState(false);
@@ -60,9 +61,9 @@ export default function RootLayout() {
       try {
         await initDatabase();
         const result = await seedDictionaryIfNeeded(language);
-        console.log(`[RootLayout] Dictionary loaded: ${result.wordCount} words`);
+        logger.log(`[RootLayout] Dictionary loaded: ${result.wordCount} words`);
       } catch (error) {
-        console.error('[RootLayout] Failed to load dictionary:', error);
+        logger.error('[RootLayout] Failed to load dictionary:', error);
       }
       setIsDictionaryLoaded(true);
     };
@@ -134,7 +135,7 @@ export default function RootLayout() {
           <Stack.Screen
             name="game"
             options={{
-              title: 'Game',
+              title: 'LetterCrush',
               headerBackTitle: 'Menu',
             }}
           />

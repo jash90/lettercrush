@@ -16,6 +16,7 @@ import { getGridManager } from '../engine/GridManager';
 import { getWordValidator } from '../engine/WordValidator';
 import { getGameOrchestrator } from '../services/GameOrchestrator';
 import { saveHighscore } from '../db';
+import { logger } from '../utils/logger';
 
 // Blocked action feedback type
 export interface BlockedAction {
@@ -227,7 +228,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           timestamp: Date.now(),
         },
       });
-      console.log('[toggleLetterSelection] Blocked - phase:', phase);
+      logger.log('[toggleLetterSelection] Blocked - phase:', phase);
       return;
     }
 
@@ -240,7 +241,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           timestamp: Date.now(),
         },
       });
-      console.log('[toggleLetterSelection] Blocked - dictionary not ready');
+      logger.log('[toggleLetterSelection] Blocked - dictionary not ready');
       return;
     }
 
@@ -315,7 +316,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           timestamp: Date.now(),
         },
       });
-      console.log('[submitWord] Blocked - phase:', phase);
+      logger.log('[submitWord] Blocked - phase:', phase);
       return;
     }
 
@@ -328,7 +329,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           timestamp: Date.now(),
         },
       });
-      console.log('[submitWord] Blocked - dictionary not ready');
+      logger.log('[submitWord] Blocked - dictionary not ready');
       return;
     }
 
@@ -365,7 +366,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           // Save highscore
           if (score > 0) {
             saveHighscore(score, moves).catch(err => {
-              console.error('[gameStore] Failed to save highscore on strikes:', err);
+              logger.error('[gameStore] Failed to save highscore on strikes:', err);
             });
           }
         } else {
@@ -383,7 +384,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       await get().processSelectedWord();
     } catch (error) {
       // Error recovery - reset to idle phase
-      console.error('[submitWord] Error during submission:', error);
+      logger.error('[submitWord] Error during submission:', error);
       set({
         phase: 'idle',
         lastValidationError: 'An error occurred. Please try again.',
@@ -435,7 +436,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const timeoutId = setTimeout(() => {
       const currentPhase = get().phase;
       if (currentPhase !== 'idle' && currentPhase !== 'paused' && currentPhase !== 'gameOver') {
-        console.warn('[processSelectedWord] Timeout - forcing phase recovery from:', currentPhase);
+        logger.warn('[processSelectedWord] Timeout - forcing phase recovery from:', currentPhase);
         set({ phase: 'idle' });
       }
     }, 10000);
@@ -474,7 +475,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }));
     } catch (error) {
       clearTimeout(timeoutId);
-      console.error('[processSelectedWord] Error:', error);
+      logger.error('[processSelectedWord] Error:', error);
       // Recover to idle state
       set({
         phase: 'idle',
@@ -566,7 +567,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { phase } = get();
     // Only recover from non-terminal phases
     if (phase !== 'idle' && phase !== 'paused' && phase !== 'gameOver') {
-      console.warn('[forceRecoverPhase] Forcing recovery from phase:', phase);
+      logger.warn('[forceRecoverPhase] Forcing recovery from phase:', phase);
       set({
         phase: 'idle',
         matchedWords: [],
@@ -605,7 +606,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       // Save highscore
       if (score > 0) {
         saveHighscore(score, moves).catch(err => {
-          console.error('[gameStore] Failed to save highscore on timeout:', err);
+          logger.error('[gameStore] Failed to save highscore on timeout:', err);
         });
       }
     } else {

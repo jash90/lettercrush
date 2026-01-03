@@ -6,6 +6,7 @@
 import { isWeb } from './platform';
 import { getDatabase } from './database';
 import type { DictionaryWord } from '../types/game.types';
+import { logger } from '../utils/logger';
 
 // In-memory dictionary for web platform
 let webDictionary: Set<string> = new Set();
@@ -46,7 +47,7 @@ export async function loadDictionary(words: string[]): Promise<number> {
       }
     }
     localStorage.setItem('lettercrush_dictionary_loaded', 'true');
-    console.log(`[Dictionary] Web: Loaded ${insertedCount} words into memory`);
+    logger.log(`[Dictionary] Web: Loaded ${insertedCount} words into memory`);
     return insertedCount;
   }
 
@@ -72,7 +73,7 @@ export async function loadDictionary(words: string[]): Promise<number> {
     }
   });
 
-  console.log(`[Dictionary] SQLite: Loaded ${insertedCount} words`);
+  logger.log(`[Dictionary] SQLite: Loaded ${insertedCount} words`);
   return insertedCount;
 }
 
@@ -145,7 +146,7 @@ export async function clearDictionary(): Promise<void> {
     webDictionary.clear();
     localStorage.setItem('lettercrush_dictionary_loaded', 'false');
     localStorage.removeItem('lettercrush_seeded_language');
-    console.log('[Dictionary] Web: Cleared all words');
+    logger.log('[Dictionary] Web: Cleared all words');
     return;
   }
 
@@ -153,7 +154,7 @@ export async function clearDictionary(): Promise<void> {
   if (!database) return;
 
   await database.execAsync('DELETE FROM dictionary');
-  console.log('[Dictionary] SQLite: Cleared all words');
+  logger.log('[Dictionary] SQLite: Cleared all words');
 }
 
 // Storage keys for seeding status
@@ -215,6 +216,6 @@ export async function setSeededLanguage(language: string): Promise<void> {
       [SEEDED_LANGUAGE_KEY, language]
     );
   } catch (error) {
-    console.warn('[Dictionary] Failed to save seeded language:', error);
+    logger.warn('[Dictionary] Failed to save seeded language:', error);
   }
 }

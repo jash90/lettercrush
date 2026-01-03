@@ -7,6 +7,7 @@
 import { create } from 'zustand';
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
+import { logger } from '../utils/logger';
 
 const SETTINGS_STORAGE_KEY = 'lettercrush_settings';
 
@@ -32,7 +33,7 @@ const storage = {
     try {
       await SecureStore.setItemAsync(key, value);
     } catch (error) {
-      console.warn('[Storage] Failed to save settings:', error);
+      logger.warn('[Storage] Failed to save settings:', error);
     }
   },
 };
@@ -73,7 +74,7 @@ async function persistSettings(settings: Omit<SettingsState, 'isLoaded'>): Promi
   try {
     await storage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
   } catch (error) {
-    console.error('[SettingsStore] Failed to persist settings:', error);
+    logger.error('[SettingsStore] Failed to persist settings:', error);
   }
 }
 
@@ -129,7 +130,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
         set({ isLoaded: true });
       }
     } catch (error) {
-      console.error('[SettingsStore] Failed to load settings:', error);
+      logger.error('[SettingsStore] Failed to load settings:', error);
       set({ isLoaded: true });
     }
   },

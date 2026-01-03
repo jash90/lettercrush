@@ -9,6 +9,7 @@ import { View, StyleSheet, Text, Platform } from 'react-native';
 import { BannerAd, BannerAdSize, useForeground } from 'react-native-google-mobile-ads';
 import { colors, spacing } from '../../theme';
 import { adConfig } from '../../config/adConfig';
+import { logger } from '../../utils/logger';
 
 interface AdBannerProps {
   visible?: boolean;
@@ -52,11 +53,11 @@ export const AdBanner = memo(function AdBanner({
         size={BannerAdSize.BANNER}
         requestOptions={adConfig.banner.requestOptions}
         onAdLoaded={() => {
-          console.log('[AdBanner] Ad loaded');
+          logger.log('[AdBanner] Ad loaded');
           setIsLoaded(true);
         }}
         onAdFailedToLoad={(error) => {
-          console.error('[AdBanner] Failed to load:', error);
+          logger.error('[AdBanner] Failed to load:', error);
           setHasError(true);
         }}
       />
