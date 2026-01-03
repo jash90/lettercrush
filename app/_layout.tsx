@@ -5,6 +5,16 @@
  * Loads dictionary on app start
  */
 
+import * as Sentry from '@sentry/react-native';
+
+// Initialize Sentry before any React rendering
+Sentry.init({
+  dsn: 'https://7b2077e0d2f12d39a4c1f02cdd00aa81@o4509198041800704.ingest.de.sentry.io/4509198056153168',
+  debug: __DEV__,
+  environment: __DEV__ ? 'development' : 'production',
+  tracesSampleRate: __DEV__ ? 1.0 : 0.2,
+});
+
 import { useEffect, useState } from 'react';
 import { Stack, router, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';

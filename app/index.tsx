@@ -16,6 +16,7 @@
   import { getHighestScore, getTotalGamesPlayed } from '../src/db';
   import { MenuButton } from '../src/components/ui/MenuButton';
   import { colors } from '../src/theme';
+  import { logger } from '../src/utils/logger';
 
   export default function HomeScreen() {
     const [highScore, setHighScore] = React.useState(0);
@@ -84,6 +85,14 @@
             subtitle="Language, clear data"
             color={colors.text.secondary}
             onPress={() => router.push('/settings')}
+          />
+          {/* TEMPORARY: Test Sentry integration - remove after verification */}
+          <MenuButton
+            icon="alert-circle"
+            title="Test Sentry"
+            subtitle="Send test error"
+            color="#FF4444"
+            onPress={() => logger.error(new Error('Sentry Test Error - Click from Home Screen'))}
           />
         </View>
       </Animated.View>

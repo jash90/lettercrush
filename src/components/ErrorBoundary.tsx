@@ -5,6 +5,7 @@
  */
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
+import * as Sentry from '@sentry/react-native';
 import { ErrorFallback } from './ErrorFallback';
 import { logger } from '../utils/logger';
 
@@ -38,6 +39,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     // Log error to console in development
     logger.error('[ErrorBoundary] Caught error:', error);
     logger.error('[ErrorBoundary] Component stack:', errorInfo.componentStack);
+
+    // Capture error in Sentry with component stack context
+    Sentry.captureException(error, {
+      extra: { componentStack: errorInfo.componentStack },
+    });
 
     this.setState({ errorInfo });
 
