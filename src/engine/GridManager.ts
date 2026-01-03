@@ -104,13 +104,43 @@ export class GridManager {
    * Ensures at least minWords valid words are present on the board
    */
   initialize(minWords: number = 6): Tile[][] {
+    console.log(`[GridManager:initialize] Starting board initialization (minWords: ${minWords}, size: ${this.size}, lang: ${this.language})`);
     this.grid = [];
     this.idCounter = 0;
 
     // Seed words on the board to ensure at least minWords are present
     this.seedWordsOnBoard(minWords);
 
+    console.log(`[GridManager:initialize] Board initialization complete`);
+    this.logBoardState('Final board');
     return this.grid;
+  }
+
+  /**
+   * Log the current board state as a visual grid
+   */
+  private logBoardState(label: string): void {
+    if (this.grid.length === 0) {
+      console.log(`[GridManager:Board] ${label}: (empty grid)`);
+      return;
+    }
+
+    const border = '┌' + '───'.repeat(this.size) + '┐';
+    const bottomBorder = '└' + '───'.repeat(this.size) + '┘';
+
+    console.log(`[GridManager:Board] ${label}:`);
+    console.log(border);
+
+    for (let row = 0; row < this.size; row++) {
+      const rowLetters = this.grid[row].map(tile => ` ${tile.letter} `).join('');
+      console.log(`│${rowLetters}│`);
+    }
+
+    console.log(bottomBorder);
+
+    // Also log as a simple string for easier parsing
+    const allLetters = this.grid.flatMap(row => row.map(tile => tile.letter)).join('');
+    console.log(`[GridManager:Board] All letters: ${allLetters}`);
   }
 
   /**
@@ -310,9 +340,12 @@ export class GridManager {
    * Create a new tile with random letter
    */
   private createTile(row: number, col: number): Tile {
+    const letter = this.getRandomLetter();
+    const tileId = `tile-${++this.idCounter}`;
+    console.log(`[GridManager:createTile] Created tile at (${row},${col}): '${letter}' [${tileId}]`);
     return {
-      id: `tile-${++this.idCounter}`,
-      letter: this.getRandomLetter(),
+      id: tileId,
+      letter,
       position: { row, col },
       isSelected: false,
       isMatched: false,
@@ -330,16 +363,20 @@ export class GridManager {
     const totalWeight = weights.reduce((a, b) => a + b, 0);
 
     let random = Math.random() * totalWeight;
+    const initialRandom = random;
 
     for (let i = 0; i < letters.length; i++) {
       random -= weights[i];
       if (random <= 0) {
+        console.log(`[GridManager:getRandomLetter] Generated: '${letters[i]}' (lang: ${this.language}, weight: ${weights[i].toFixed(2)}, roll: ${initialRandom.toFixed(2)}/${totalWeight.toFixed(2)})`);
         return letters[i];
       }
     }
 
     // Fallback to most common letter based on language
-    return this.language === 'pl' ? 'A' : 'E';
+    const fallbackLetter = this.language === 'pl' ? 'A' : 'E';
+    console.warn(`[GridManager:getRandomLetter] FALLBACK triggered, returning '${fallbackLetter}' (lang: ${this.language})`);
+    return fallbackLetter;
   }
 
   /**
@@ -824,14 +861,32 @@ export class GridManager {
    */
   private crosswordStateToGrid(state: CrosswordState): void {
     this.grid = [];
+    const placedLetters: string[] = [];
+    const randomLetters: string[] = [];
+
+    console.log(`[GridManager:crosswordStateToGrid] Converting crossword state to grid (${state.placedWords.length} words placed)`);
+    console.log(`[GridManager:crosswordStateToGrid] Placed words:`);
+    state.placedWords.forEach((pw, idx) => {
+      const dirSymbol = pw.direction === 'horizontal' ? '→' : '↓';
+      console.log(`  ${idx + 1}. "${pw.word}" at (${pw.startRow},${pw.startCol}) ${dirSymbol} ${pw.direction}`);
+    });
 
     for (let row = 0; row < this.size; row++) {
       this.grid[row] = [];
       for (let col = 0; col < this.size; col++) {
         const letter = state.grid[row][col];
+        const isFromWord = letter !== null;
+        const finalLetter = isFromWord ? letter : this.getRandomLetter();
+
+        if (isFromWord) {
+          placedLetters.push(finalLetter);
+        } else {
+          randomLetters.push(finalLetter);
+        }
+
         this.grid[row][col] = {
           id: `tile-${++this.idCounter}`,
-          letter: letter !== null ? letter : this.getRandomLetter(),
+          letter: finalLetter,
           position: { row, col },
           isSelected: false,
           isMatched: false,
@@ -839,6 +894,10 @@ export class GridManager {
         };
       }
     }
+
+    console.log(`[GridManager:crosswordStateToGrid] Letters from words (${placedLetters.length}): ${placedLetters.join('')}`);
+    console.log(`[GridManager:crosswordStateToGrid] Random fill letters (${randomLetters.length}): ${randomLetters.join('')}`);
+    this.logBoardState('After crossword conversion');
   }
 
   // ==================== PLACEMENT VALIDATION METHODS ====================
@@ -935,6 +994,8 @@ export class GridManager {
     startCol: number,
     direction: 'horizontal' | 'vertical'
   ): void {
+    const dirSymbol = direction === 'horizontal' ? '→' : '↓';
+    console.log(`[GridManager:commitPlacement] Placing "${word}" at (${startRow},${startCol}) ${dirSymbol} ${direction}`);
     for (let i = 0; i < word.length; i++) {
       const row = direction === 'horizontal' ? startRow : startRow + i;
       const col = direction === 'horizontal' ? startCol + i : startCol;
@@ -1376,12 +1437,23 @@ export class GridManager {
    * Fill any empty cells with random letters
    */
   private fillEmptyCells(): void {
+    const filledCells: Array<{row: number, col: number, letter: string}> = [];
+
     for (let row = 0; row < this.size; row++) {
       for (let col = 0; col < this.size; col++) {
         if (this.grid[row][col].letter === '') {
-          this.grid[row][col].letter = this.getRandomLetter();
+          const letter = this.getRandomLetter();
+          this.grid[row][col].letter = letter;
+          filledCells.push({ row, col, letter });
         }
       }
+    }
+
+    if (filledCells.length > 0) {
+      console.log(`[GridManager:fillEmptyCells] Filled ${filledCells.length} empty cells:`);
+      const lettersOnly = filledCells.map(c => c.letter).join('');
+      console.log(`[GridManager:fillEmptyCells] Generated letters: ${lettersOnly}`);
+      this.logBoardState('After fillEmptyCells');
     }
   }
 

@@ -261,7 +261,8 @@ describe('WordValidator', () => {
 
       it('should reject English-only words not in Polish', () => {
         // English words that do NOT exist in Polish
-        const englishOnlyWords = ['THE', 'AND', 'WITH', 'HAVE', 'THIS', 'WILL', 'YOUR', 'FROM'];
+        // Note: 'WILL' is valid in Polish (means "villa"), so it's excluded from this list
+        const englishOnlyWords = ['THE', 'AND', 'WITH', 'HAVE', 'THIS', 'YOUR', 'FROM'];
 
         englishOnlyWords.forEach(word => {
           expect(validator.isValidWord(word)).toBe(false);
@@ -302,18 +303,19 @@ describe('WordValidator', () => {
         // Polish words that do NOT exist in English
         // Note: 'ALE' excluded because it's an English word (type of beer)
         // Note: 'KINO' excluded because it's an English word (type of tree gum)
-        const polishOnlyWords = ['TAK', 'NIE', 'CZY', 'PIES'];
+        // Note: 'PIES' excluded because it's an English word (plural of pie)
+        const polishOnlyWords = ['TAK', 'NIE', 'CZY', 'ZUPA'];
 
         polishOnlyWords.forEach(word => {
           expect(validator.isValidWord(word)).toBe(false);
         });
       });
 
-      it('should have loaded approximately 38k English words', () => {
+      it('should have loaded approximately 55k English words', () => {
         const wordCount = validator.getWordCount();
-        // English dictionary should have ~38,000 words (minus words < 3 chars)
-        expect(wordCount).toBeGreaterThan(35000);
-        expect(wordCount).toBeLessThan(42000);
+        // English dictionary should have ~55,111 words (3-6 letter words from dwyl/english-words)
+        expect(wordCount).toBeGreaterThan(50000);
+        expect(wordCount).toBeLessThan(60000);
       });
     });
 

@@ -102,20 +102,24 @@ export const LETTER_SCORES: Record<string, number> = {
   Y: 4, Z: 10,
 };
 
-// Polish letter frequency weights (simplified alphabet without diacritics)
+// Polish letter frequency weights (full Polish alphabet with diacritics)
 export const POLISH_LETTER_WEIGHTS: Record<string, number> = {
-  A: 8.9, B: 1.5, C: 3.9, D: 3.3, E: 7.7, F: 0.3,
-  G: 1.4, H: 1.1, I: 8.2, J: 2.3, K: 3.5, L: 2.1,
-  M: 2.8, N: 5.5, O: 7.8, P: 3.1, R: 4.7, S: 4.3,
-  T: 4.0, U: 2.5, W: 4.7, Y: 3.8, Z: 5.6,
+  A: 8.9, Ą: 1.0, B: 1.5, C: 3.9, Ć: 0.4, D: 3.3,
+  E: 7.7, Ę: 1.1, F: 0.3, G: 1.4, H: 1.1, I: 8.2,
+  J: 2.3, K: 3.5, L: 2.1, Ł: 2.1, M: 2.8, N: 5.5,
+  Ń: 0.2, O: 7.8, Ó: 0.9, P: 3.1, R: 4.7, S: 4.3,
+  Ś: 0.7, T: 4.0, U: 2.5, W: 4.7, Y: 3.8, Z: 5.6,
+  Ź: 0.1, Ż: 0.8,
 };
 
-// Polish letter scores (based on Polish Scrabble)
+// Polish letter scores (based on Polish Scrabble, full alphabet with diacritics)
 export const POLISH_LETTER_SCORES: Record<string, number> = {
-  A: 1, B: 3, C: 2, D: 2, E: 1, F: 5,
-  G: 3, H: 3, I: 1, J: 3, K: 2, L: 2,
-  M: 2, N: 1, O: 1, P: 2, R: 1, S: 1,
-  T: 2, U: 3, W: 1, Y: 2, Z: 1,
+  A: 1, Ą: 5, B: 3, C: 2, Ć: 6, D: 2,
+  E: 1, Ę: 5, F: 5, G: 3, H: 3, I: 1,
+  J: 3, K: 2, L: 2, Ł: 3, M: 2, N: 1,
+  Ń: 7, O: 1, Ó: 5, P: 2, R: 1, S: 1,
+  Ś: 5, T: 2, U: 3, W: 1, Y: 2, Z: 1,
+  Ź: 9, Ż: 5,
 };
 
 // Get letter weights by language
