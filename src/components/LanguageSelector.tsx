@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import type { Language } from '../types/game.types';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
@@ -19,6 +20,8 @@ export function LanguageSelector({
   onChangeLanguage,
   disabled = false,
 }: LanguageSelectorProps) {
+  const { t } = useTranslation('common');
+
   return (
     <View style={styles.container}>
       <Pressable
@@ -30,7 +33,7 @@ export function LanguageSelector({
         ]}
         disabled={disabled}
         accessibilityRole="button"
-        accessibilityLabel="Switch to English"
+        accessibilityLabel={t('accessibility.switchToEnglish')}
         accessibilityState={{ selected: language === 'en', disabled }}
       >
         <Text style={styles.flag}>🇬🇧</Text>
@@ -53,7 +56,7 @@ export function LanguageSelector({
         ]}
         disabled={disabled}
         accessibilityRole="button"
-        accessibilityLabel="Switch to Polish"
+        accessibilityLabel={t('accessibility.switchToPolish')}
         accessibilityState={{ selected: language === 'pl', disabled }}
       >
         <Text style={styles.flag}>🇵🇱</Text>

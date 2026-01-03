@@ -1,0 +1,260 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "appName": "LetterCrush",
+    "navigation": {
+      "menu": "Menu",
+      "selectLanguage": "Select Language"
+    },
+    "languageSelect": {
+      "title": "Choose your language",
+      "playInEnglish": "Play in English",
+      "playInPolish": "Graj po polsku",
+      "hint": "You can change this later in Settings"
+    },
+    "accessibility": {
+      "switchToEnglish": "Switch to English",
+      "switchToPolish": "Switch to Polish"
+    },
+    "ads": {
+      "label": "Advertisement",
+      "loading": "Ad loading..."
+    },
+    "menu": {
+      "play": {
+        "title": "Play Game",
+        "subtitle": "Start a new game"
+      },
+      "highscores": {
+        "title": "Highscores",
+        "subtitle": "View your best scores"
+      },
+      "howToPlay": {
+        "title": "How to Play",
+        "subtitle": "Learn the rules"
+      },
+      "settings": {
+        "title": "Settings",
+        "subtitle": "Language, clear data"
+      },
+      "testSentry": {
+        "title": "Test Sentry",
+        "subtitle": "Send test error"
+      }
+    },
+    "settings": {
+      "sections": {
+        "language": "Language",
+        "dictionary": "Dictionary",
+        "data": "Data",
+        "about": "About"
+      },
+      "labels": {
+        "currentLanguage": "Current language",
+        "wordsLoaded": "Words loaded",
+        "version": "Version"
+      },
+      "buttons": {
+        "clearHighscores": "Clear All Highscores"
+      },
+      "languages": {
+        "english": "English",
+        "polish": "Polski"
+      }
+    },
+    "stats": {
+      "bestScore": "Best Score",
+      "gamesPlayed": "Games Played",
+      "averageScore": "Average Score",
+      "leaderboard": "Leaderboard",
+      "empty": {
+        "title": "No scores yet",
+        "subtitle": "Play some games to see your scores here!"
+      }
+    },
+    "alerts": {
+      "clearScores": {
+        "title": "Clear All Scores",
+        "message": "Are you sure you want to delete all your highscores? This cannot be undone.",
+        "confirm": "Delete",
+        "cancel": "Cancel"
+      },
+      "done": {
+        "title": "Done",
+        "scoresCleared": "All highscores have been cleared."
+      }
+    },
+    "credits": {
+      "madeWith": "Made with Raccoon Software",
+      "copyright": "LetterCrush © 2026"
+    }
+  },
+  "game": {
+    "loading": "Loading game...",
+    "pauseButton": {
+      "accessibility": "Pause game"
+    },
+    "gameOver": {
+      "title": "GAME OVER",
+      "timesUp": "TIME'S UP!",
+      "strikes": "3 STRIKES!",
+      "playAgain": "PLAY AGAIN",
+      "accessibility": "Game Over. Final score: {{score}}",
+      "playAgainHint": "Start a new game"
+    },
+    "pause": {
+      "title": "PAUSED",
+      "resume": "RESUME",
+      "sound": "Sound",
+      "haptics": "Haptics",
+      "quitGame": "Quit Game",
+      "accessibility": "Game Paused",
+      "resumeHint": "Continues the game from where you left off",
+      "quitHint": "Returns to the home screen. Progress will be lost."
+    },
+    "quitAlert": {
+      "title": "Quit Game?",
+      "message": "Your current progress will be lost.",
+      "confirm": "Quit",
+      "cancel": "Cancel"
+    },
+    "stats": {
+      "title": "Stats",
+      "score": "SCORE",
+      "time": "TIME",
+      "strikes": "STRIKES",
+      "wordsFound": "Words Found",
+      "longestWord": "Longest Word",
+      "bestCombo": "Best Combo",
+      "moves": "Moves",
+      "movesMade": "Moves Made",
+      "highScore": "High Score",
+      "newHighScore": "NEW HIGH SCORE!",
+      "newRecord": "NEW RECORD!",
+      "accessibility": "Game statistics"
+    },
+    "toggle": {
+      "on": "ON",
+      "off": "OFF"
+    },
+    "plurals": {
+      "wordsFound_one": "{{count}} word found",
+      "wordsFound_other": "{{count}} words found",
+      "points_one": "{{count}} point",
+      "points_other": "{{count}} points"
+    },
+    "actions": {
+      "loading": "Loading...",
+      "checking": "Checking...",
+      "wait": "Wait...",
+      "submit": "Submit",
+      "clear": "Clear",
+      "buttonDisabled": "Button disabled",
+      "clearHint": "Clear selected letters",
+      "submitHint": "Submit word for validation"
+    },
+    "wordBuilder": {
+      "placeholder": "Tap letters to spell a word...",
+      "needMore_one": "Need {{count}} more letter",
+      "needMore_other": "Need {{count}} more letters",
+      "ready": "Ready to submit!"
+    }
+  },
+  "tutorial": {
+    "objective": {
+      "title": "Objective",
+      "text": "Swap adjacent letters to form valid words (3+ letters). Words can be formed horizontally or vertically. Score as many points as possible!"
+    },
+    "howToSwap": {
+      "title": "How to Swap",
+      "method1": {
+        "step1": "Tap a letter tile to select it",
+        "step2": "Tap an adjacent tile to swap them"
+      },
+      "or": "— OR —",
+      "method2": {
+        "step1": "Swipe in any direction on a tile",
+        "step2": "The tile swaps with its neighbor"
+      }
+    },
+    "scoring": {
+      "title": "Scoring",
+      "3letter": "3-letter word",
+      "4letter": "4-letter word",
+      "5letter": "5-letter word",
+      "6letter": "6+ letter word",
+      "combo": "Combo bonus",
+      "points": {
+        "3letter": "100 pts",
+        "4letter": "200 pts",
+        "5letter": "400 pts",
+        "6letter": "800+ pts",
+        "combo": "x1.5 per chain"
+      },
+      "tip": "Longer words and combos give bonus points!"
+    },
+    "languages": {
+      "title": "Languages",
+      "text": "Switch between English 🇬🇧 and Polish 🇵🇱 dictionaries using the language toggle at the top of the game screen.",
+      "tip": "Each language has its own dictionary with common words."
+    },
+    "gameOver": {
+      "title": "Game Over",
+      "text": "The game ends when no more valid moves are available (no adjacent tiles can be swapped to form words).",
+      "tip": "Plan ahead to keep the game going!"
+    },
+    "proTips": {
+      "title": "Pro Tips",
+      "tips": [
+        "Look for common word patterns like 'THE', 'AND', 'ING'",
+        "Create chain reactions for massive combo bonuses",
+        "Longer words give exponentially more points",
+        "New tiles fall from above after matches"
+      ]
+    }
+  },
+  "errors": {
+    "validation": {
+      "minLength": "Word must be at least 3 letters",
+      "notAdjacent": "Letters must be adjacent",
+      "invalidWord": "\"{{word}}\" is not a valid word",
+      "invalidWordStrike": "\"{{word}}\" is not a valid word. Strike {{current}}/{{max}}",
+      "invalidWordStrikeFinal": "\"{{word}}\" is not a valid word. Strike {{current}}/{{max}}!",
+      "genericError": "An error occurred. Please try again."
+    },
+    "blocked": {
+      "selection": {
+        "validating": "Please wait, checking word...",
+        "matching": "Please wait, matching in progress...",
+        "cascading": "Please wait, tiles are falling...",
+        "refilling": "Please wait, refilling grid...",
+        "paused": "Game is paused",
+        "gameOver": "Game is over",
+        "selecting": "Selection in progress",
+        "default": "Please wait..."
+      },
+      "submission": {
+        "validating": "Already checking word...",
+        "matching": "Processing match...",
+        "cascading": "Tiles falling...",
+        "refilling": "Refilling grid...",
+        "paused": "Game is paused",
+        "gameOver": "Game is over",
+        "selecting": "Selection in progress",
+        "default": "Please wait..."
+      },
+      "dictionary": {
+        "loading": "Loading dictionary...",
+        "notReady": "Dictionary loading..."
+      }
+    },
+    "fallback": {
+      "title": "Oops!",
+      "subtitle": "Something went wrong",
+      "message": "An unexpected error occurred. Please try again.",
+      "details": "Error Details:",
+      "retry": "Try Again",
+      "goHome": "Go to Home"
+    }
+  }
+}

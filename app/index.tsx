@@ -5,20 +5,20 @@
   import React from 'react';
   import {
     View,
-    Text,
     StyleSheet,
-    ScrollView,
     Animated,
     Image,
   } from 'react-native';
   import { SafeAreaView } from 'react-native-safe-area-context';
   import { router } from 'expo-router';
+  import { useTranslation } from 'react-i18next';
   import { getHighestScore, getTotalGamesPlayed } from '../src/db';
   import { MenuButton } from '../src/components/ui/MenuButton';
   import { colors } from '../src/theme';
-  import { logger } from '../src/utils/logger';
+  import * as Sentry from '@sentry/react-native';
 
   export default function HomeScreen() {
+    const { t } = useTranslation();
     const [highScore, setHighScore] = React.useState(0);
     const [gamesPlayed, setGamesPlayed] = React.useState(0);
     const fadeAnim = React.useRef(new Animated.Value(0)).current;
@@ -60,39 +60,39 @@
         <View style={styles.menuContainer}>
           <MenuButton
             icon="play"
-            title="Play Game"
-            subtitle="Start a new game"
+            title={t('menu.play.title')}
+            subtitle={t('menu.play.subtitle')}
             color={colors.accent.primary}
             onPress={() => router.push('/game')}
           />
           <MenuButton
             icon="trophy"
-            title="Highscores"
-            subtitle="View your best scores"
+            title={t('menu.highscores.title')}
+            subtitle={t('menu.highscores.subtitle')}
             color={colors.accent.gold}
             onPress={() => router.push('/stats')}
           />
           <MenuButton
             icon="help-circle"
-            title="How to Play"
-            subtitle="Learn the rules"
+            title={t('menu.howToPlay.title')}
+            subtitle={t('menu.howToPlay.subtitle')}
             color={colors.accent.orange}
             onPress={() => router.push('/tutorial')}
           />
           <MenuButton
             icon="settings"
-            title="Settings"
-            subtitle="Language, clear data"
+            title={t('menu.settings.title')}
+            subtitle={t('menu.settings.subtitle')}
             color={colors.text.secondary}
             onPress={() => router.push('/settings')}
           />
           {/* TEMPORARY: Test Sentry integration - remove after verification */}
           <MenuButton
             icon="alert-circle"
-            title="Test Sentry"
-            subtitle="Send test error"
+            title={t('menu.testSentry.title')}
+            subtitle={t('menu.testSentry.subtitle')}
             color="#FF4444"
-            onPress={() => logger.error(new Error('Sentry Test Error - Click from Home Screen'))}
+            onPress={ () => { Sentry.captureException(new Error('Test Sentry Error')) }}
           />
         </View>
       </Animated.View>

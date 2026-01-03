@@ -7,6 +7,7 @@
 
 import React, { memo } from 'react';
 import { View, StyleSheet, Text } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Button } from '../ui';
 import { spacing, colors, fontSize } from '../../theme';
 import type { GamePhase } from '../../types/game.types';
@@ -28,6 +29,8 @@ export const ActionButtons = memo(function ActionButtons({
   onSubmit,
   onClear,
 }: ActionButtonsProps) {
+  const { t } = useTranslation('game');
+
   // Determine if actions should be blocked
   const isIdle = phase === 'idle';
   const isProcessing = phase === 'validating' || phase === 'matching' || phase === 'cascading' || phase === 'refilling';
@@ -39,10 +42,10 @@ export const ActionButtons = memo(function ActionButtons({
 
   // Dynamic button text
   const getSubmitText = (): string => {
-    if (!isDictionaryReady) return 'Loading...';
-    if (phase === 'validating') return 'Checking...';
-    if (isProcessing) return 'Wait...';
-    return 'Submit';
+    if (!isDictionaryReady) return t('actions.loading');
+    if (phase === 'validating') return t('actions.checking');
+    if (isProcessing) return t('actions.wait');
+    return t('actions.submit');
   };
 
   return (
@@ -53,18 +56,18 @@ export const ActionButtons = memo(function ActionButtons({
       )}
       <View style={styles.buttonRow}>
         <Button
-          title="Clear"
+          title={t('actions.clear')}
           onPress={onClear}
           variant="secondary"
           disabled={!canClear}
-          accessibilityHint={!canClear ? 'Button disabled' : 'Clear selected letters'}
+          accessibilityHint={!canClear ? t('actions.buttonDisabled') : t('actions.clearHint')}
         />
         <Button
           title={getSubmitText()}
           onPress={onSubmit}
           variant="primary"
           disabled={!canSubmit}
-          accessibilityHint={!canSubmit ? blockedReason || 'Button disabled' : 'Submit word for validation'}
+          accessibilityHint={!canSubmit ? blockedReason || t('actions.buttonDisabled') : t('actions.submitHint')}
         />
       </View>
     </View>

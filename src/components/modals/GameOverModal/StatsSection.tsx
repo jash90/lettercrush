@@ -6,6 +6,7 @@
 
 import React, { memo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { StatRow } from './StatRow';
 import { colors, spacing, borderRadius, fontSize } from '../../../theme';
 
@@ -25,30 +26,31 @@ interface StatsSectionProps {
 export const StatsSection = memo(function StatsSection({
   stats,
 }: StatsSectionProps) {
+  const { t } = useTranslation('game');
   const { wordsFound, longestWord, bestCombo, moves, highScore } = stats;
 
   return (
     <View
       style={styles.container}
       accessibilityRole="none"
-      accessibilityLabel="Game statistics"
+      accessibilityLabel={t('stats.accessibility')}
     >
-      <Text style={styles.title}>Stats</Text>
+      <Text style={styles.title}>{t('stats.title')}</Text>
       <View style={styles.divider} />
 
-      <StatRow label="Words Found" value={wordsFound} />
+      <StatRow label={t('stats.wordsFound')} value={wordsFound} />
       <StatRow
-        label="Longest Word"
+        label={t('stats.longestWord')}
         value={longestWord || '\u2014'}
         valueStyle={styles.wordValue}
       />
-      <StatRow label="Best Combo" value={`\u00D7${bestCombo}`} />
-      <StatRow label="Moves Made" value={moves} />
+      <StatRow label={t('stats.bestCombo')} value={`\u00D7${bestCombo}`} />
+      <StatRow label={t('stats.movesMade')} value={moves} />
 
       <View style={styles.sectionDivider} />
 
       <StatRow
-        label="High Score"
+        label={t('stats.highScore')}
         value={highScore.toLocaleString()}
         valueStyle={styles.highScoreValue}
       />

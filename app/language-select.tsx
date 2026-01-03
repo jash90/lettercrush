@@ -13,12 +13,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useShallow } from 'zustand/react/shallow';
+import { useTranslation } from 'react-i18next';
 import { useLanguageStore } from '../src/stores/languageStore';
 import { LanguageButton } from '../src/components/LanguageButton';
 import { colors } from '../src/theme';
 import type { Language } from '../src/types/game.types';
 
 export default function LanguageSelectScreen() {
+  const { t } = useTranslation('common');
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
   const scaleAnim = React.useRef(new Animated.Value(0.8)).current;
 
@@ -62,8 +64,8 @@ export default function LanguageSelectScreen() {
         {/* Logo & Title */}
         <View style={styles.header}>
           <Text style={styles.logo}>🔤</Text>
-          <Text style={styles.title}>LetterCrush</Text>
-          <Text style={styles.subtitle}>Choose your language</Text>
+          <Text style={styles.title}>{t('appName')}</Text>
+          <Text style={styles.subtitle}>{t('languageSelect.title')}</Text>
         </View>
 
         {/* Language Options */}
@@ -71,13 +73,13 @@ export default function LanguageSelectScreen() {
           <LanguageButton
             flag="🇬🇧"
             title="English"
-            subtitle="Play in English"
+            subtitle={t('languageSelect.playInEnglish')}
             onPress={() => handleSelectLanguage('en')}
           />
           <LanguageButton
             flag="🇵🇱"
             title="Polski"
-            subtitle="Graj po polsku"
+            subtitle={t('languageSelect.playInPolish')}
             onPress={() => handleSelectLanguage('pl')}
           />
         </View>
@@ -85,7 +87,7 @@ export default function LanguageSelectScreen() {
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            You can change this later in Settings
+            {t('languageSelect.hint')}
           </Text>
         </View>
       </Animated.View>

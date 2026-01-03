@@ -10,6 +10,7 @@ import {
   Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import {
   getTopHighscores,
   getHighestScore,
@@ -21,6 +22,7 @@ import { colors } from '../src/theme';
 import type { HighScoreEntry } from '../src/types/game.types';
 
 export default function StatsScreen() {
+  const { t } = useTranslation();
   const [highscores, setHighscores] = React.useState<HighScoreEntry[]>([]);
   const [stats, setStats] = React.useState({
     highest: 0,
@@ -62,26 +64,26 @@ export default function StatsScreen() {
             <StatCard
               icon="trophy"
               value={stats.highest.toLocaleString()}
-              label="Best Score"
+              label={t('stats.bestScore')}
               color={colors.accent.gold}
             />
             <StatCard
               icon="game-controller"
               value={stats.games.toString()}
-              label="Games Played"
+              label={t('stats.gamesPlayed')}
               color={colors.accent.orange}
             />
             <StatCard
               icon="stats-chart"
               value={stats.average.toLocaleString()}
-              label="Average Score"
+              label={t('stats.averageScore')}
               color={colors.accent.primary}
             />
           </View>
 
           {/* Leaderboard */}
           <View style={styles.leaderboardSection}>
-            <Text style={styles.sectionTitle}>🏆 Leaderboard</Text>
+            <Text style={styles.sectionTitle}>{t('stats.leaderboard')}</Text>
 
             {highscores.length > 0 ? (
               <View style={styles.leaderboard}>
@@ -97,9 +99,9 @@ export default function StatsScreen() {
             ) : (
               <View style={styles.emptyState}>
                 <Ionicons name="game-controller-outline" size={64} color={colors.text.muted} />
-                <Text style={styles.emptyTitle}>No scores yet</Text>
+                <Text style={styles.emptyTitle}>{t('stats.empty.title')}</Text>
                 <Text style={styles.emptySubtitle}>
-                  Play some games to see your scores here!
+                  {t('stats.empty.subtitle')}
                 </Text>
               </View>
             )}

@@ -3,6 +3,7 @@
  * Manages game language selection with persistence
  * Uses platform-specific storage (localStorage for web, SecureStore for native)
  * Dictionary loading is handled by _layout.tsx when language state changes
+ * i18n is synchronized automatically on language changes
  */
 
 import { create } from 'zustand';
@@ -10,6 +11,7 @@ import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import type { Language } from '../types/game.types';
 import { logger } from '../utils/logger';
+import { changeLanguage as changeI18nLanguage } from '../i18n';
 // Note: Dictionary loading is handled by _layout.tsx when language changes
 // to avoid race conditions and provide proper loading UI
 
@@ -61,11 +63,15 @@ export const useLanguageStore = create<LanguageStore>((set, get) => ({
     try {
       await storage.setItem(LANGUAGE_STORAGE_KEY, language);
       set({ language });
+      // Sync i18n language
+      await changeI18nLanguage(language);
       // Dictionary loading is triggered by _layout.tsx when language state changes
     } catch (error) {
       logger.error('[LanguageStore] Failed to save language:', error);
       // Still update state even if persistence fails
       set({ language });
+      // Try to sync i18n even if storage fails
+      await changeI18nLanguage(language).catch(() => {});
     }
   },
 
@@ -78,6 +84,9 @@ export const useLanguageStore = create<LanguageStore>((set, get) => ({
       // Check first-run status
       const firstRunComplete = await storage.getItem(FIRST_RUN_KEY);
       const isFirstRun = firstRunComplete !== 'complete';
+
+      // Sync i18n language with stored preference
+      await changeI18nLanguage(language);
 
       set({ language, isLoaded: true, isFirstRun });
     } catch (error) {

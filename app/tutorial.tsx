@@ -10,10 +10,12 @@ import {
   ScrollView,
   Animated,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { TutorialSection, StepItem, ScoreRow, TipItem } from '../src/components/tutorial';
 import { colors } from '../src/theme';
 
 export default function TutorialScreen() {
+  const { t } = useTranslation('tutorial');
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {
@@ -31,90 +33,85 @@ export default function TutorialScreen() {
           {/* Game Objective */}
           <TutorialSection
             icon="flag"
-            title="Objective"
+            title={t('objective.title')}
             color={colors.accent.primary}
           >
             <Text style={styles.text}>
-              Swap adjacent letters to form valid words (3+ letters).
-              Words can be formed horizontally or vertically.
-              Score as many points as possible!
+              {t('objective.text')}
             </Text>
           </TutorialSection>
 
           {/* How to Swap */}
           <TutorialSection
             icon="swap-horizontal"
-            title="How to Swap"
+            title={t('howToSwap.title')}
             color={colors.accent.secondary}
           >
             <View style={styles.stepList}>
-              <StepItem number={1} text="Tap a letter tile to select it" />
-              <StepItem number={2} text="Tap an adjacent tile to swap them" />
-              <Text style={styles.orText}>— OR —</Text>
-              <StepItem number={1} text="Swipe in any direction on a tile" />
-              <StepItem number={2} text="The tile swaps with its neighbor" />
+              <StepItem number={1} text={t('howToSwap.method1.step1')} />
+              <StepItem number={2} text={t('howToSwap.method1.step2')} />
+              <Text style={styles.orText}>{t('howToSwap.or')}</Text>
+              <StepItem number={1} text={t('howToSwap.method2.step1')} />
+              <StepItem number={2} text={t('howToSwap.method2.step2')} />
             </View>
           </TutorialSection>
 
           {/* Scoring */}
           <TutorialSection
             icon="star"
-            title="Scoring"
+            title={t('scoring.title')}
             color={colors.accent.gold}
           >
             <View style={styles.scoreTable}>
-              <ScoreRow label="3-letter word" value="100 pts" />
-              <ScoreRow label="4-letter word" value="200 pts" />
-              <ScoreRow label="5-letter word" value="400 pts" />
-              <ScoreRow label="6+ letter word" value="800+ pts" />
-              <ScoreRow label="Combo bonus" value="x1.5 per chain" />
+              <ScoreRow label={t('scoring.3letter')} value={t('scoring.points.3letter')} />
+              <ScoreRow label={t('scoring.4letter')} value={t('scoring.points.4letter')} />
+              <ScoreRow label={t('scoring.5letter')} value={t('scoring.points.5letter')} />
+              <ScoreRow label={t('scoring.6letter')} value={t('scoring.points.6letter')} />
+              <ScoreRow label={t('scoring.combo')} value={t('scoring.points.combo')} />
             </View>
             <Text style={styles.tipText}>
-              💡 Longer words and combos give bonus points!
+              {t('scoring.tip')}
             </Text>
           </TutorialSection>
 
           {/* Language Support */}
           <TutorialSection
             icon="globe"
-            title="Languages"
+            title={t('languages.title')}
             color={colors.accent.orange}
           >
             <Text style={styles.text}>
-              Switch between English 🇬🇧 and Polish 🇵🇱 dictionaries
-              using the language toggle at the top of the game screen.
+              {t('languages.text')}
             </Text>
             <Text style={styles.tipText}>
-              💡 Each language has its own dictionary with common words.
+              {t('languages.tip')}
             </Text>
           </TutorialSection>
 
           {/* Game Over */}
           <TutorialSection
             icon="alert-circle"
-            title="Game Over"
+            title={t('gameOver.title')}
             color={colors.accent.warning}
           >
             <Text style={styles.text}>
-              The game ends when no more valid moves are available
-              (no adjacent tiles can be swapped to form words).
+              {t('gameOver.text')}
             </Text>
             <Text style={styles.tipText}>
-              💡 Plan ahead to keep the game going!
+              {t('gameOver.tip')}
             </Text>
           </TutorialSection>
 
           {/* Tips */}
           <TutorialSection
             icon="bulb"
-            title="Pro Tips"
+            title={t('proTips.title')}
             color={colors.accent.success}
           >
             <View style={styles.tipsList}>
-              <TipItem text="Look for common word patterns like 'THE', 'AND', 'ING'" />
-              <TipItem text="Create chain reactions for massive combo bonuses" />
-              <TipItem text="Longer words give exponentially more points" />
-              <TipItem text="New tiles fall from above after matches" />
+              {(t('proTips.tips', { returnObjects: true }) as string[]).map((tip, index) => (
+                <TipItem key={index} text={tip} />
+              ))}
             </View>
           </TutorialSection>
         </Animated.View>

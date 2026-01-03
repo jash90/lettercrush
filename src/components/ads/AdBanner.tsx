@@ -6,6 +6,7 @@
 
 import React, { memo, useState, useRef } from 'react';
 import { View, StyleSheet, Text, Platform } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { BannerAd, BannerAdSize, useForeground } from 'react-native-google-mobile-ads';
 import { colors, spacing } from '../../theme';
 import { adConfig } from '../../config/adConfig';
@@ -20,6 +21,7 @@ export const AdBanner = memo(function AdBanner({
   visible = true,
   testID = 'ad-banner',
 }: AdBannerProps) {
+  const { t } = useTranslation('common');
   const [hasError, setHasError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const bannerRef = useRef<BannerAd>(null);
@@ -44,7 +46,7 @@ export const AdBanner = memo(function AdBanner({
     <View
       style={styles.container}
       testID={testID}
-      accessibilityLabel="Advertisement"
+      accessibilityLabel={t('ads.label')}
       accessibilityRole="none"
     >
       <BannerAd
@@ -63,7 +65,7 @@ export const AdBanner = memo(function AdBanner({
       />
       {!isLoaded && (
         <View style={styles.placeholder}>
-          <Text style={styles.placeholderText}>Ad loading...</Text>
+          <Text style={styles.placeholderText}>{t('ads.loading')}</Text>
         </View>
       )}
     </View>

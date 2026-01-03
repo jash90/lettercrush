@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { clearHighscores, getWordCount } from '../src/db';
 import { useLanguageStore } from '../src/stores/languageStore';
 import { SettingsSection, LanguageOption } from '../src/components/settings';
@@ -23,6 +24,7 @@ import type { Language } from '../src/types/game.types';
 import packageJson from '../package.json';
 
 export default function SettingsScreen() {
+  const { t } = useTranslation();
   const [wordCount, setWordCount] = React.useState(0);
   const { language, setLanguage } = useLanguageStore();
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
@@ -44,16 +46,16 @@ export default function SettingsScreen() {
 
   const handleClearScores = () => {
     Alert.alert(
-      'Clear All Scores',
-      'Are you sure you want to delete all your highscores? This cannot be undone.',
+      t('alerts.clearScores.title'),
+      t('alerts.clearScores.message'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('alerts.clearScores.cancel'), style: 'cancel' },
         {
-          text: 'Delete',
+          text: t('alerts.clearScores.confirm'),
           style: 'destructive',
           onPress: async () => {
             await clearHighscores();
-            Alert.alert('Done', 'All highscores have been cleared.');
+            Alert.alert(t('alerts.done.title'), t('alerts.done.scoresCleared'));
           },
         },
       ]
@@ -69,7 +71,7 @@ export default function SettingsScreen() {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
           {/* Language Selection */}
-          <SettingsSection title="Language" icon="globe" color={colors.accent.secondary}>
+          <SettingsSection title={t('settings.sections.language')} icon="globe" color={colors.accent.secondary}>
             <View style={styles.languageOptions}>
               <LanguageOption
                 flag="🇬🇧"
@@ -89,21 +91,21 @@ export default function SettingsScreen() {
           </SettingsSection>
 
           {/* Dictionary Info */}
-          <SettingsSection title="Dictionary" icon="book" color={colors.accent.orange}>
+          <SettingsSection title={t('settings.sections.dictionary')} icon="book" color={colors.accent.orange}>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Current language</Text>
+              <Text style={styles.infoLabel}>{t('settings.labels.currentLanguage')}</Text>
               <Text style={styles.infoValue}>
                 {language === 'en' ? '🇬🇧 English' : '🇵🇱 Polski'}
               </Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Words loaded</Text>
+              <Text style={styles.infoLabel}>{t('settings.labels.wordsLoaded')}</Text>
               <Text style={styles.infoValue}>{wordCount.toLocaleString()}</Text>
             </View>
           </SettingsSection>
 
           {/* Data Management */}
-          <SettingsSection title="Data" icon="server" color={colors.accent.warning}>
+          <SettingsSection title={t('settings.sections.data')} icon="server" color={colors.accent.warning}>
             <Pressable
               style={({ pressed }) => [
                 styles.dangerButton,
@@ -112,23 +114,23 @@ export default function SettingsScreen() {
               onPress={handleClearScores}
             >
               <Ionicons name="trash-outline" size={20} color={colors.accent.error} />
-              <Text style={styles.dangerButtonText}>Clear All Highscores</Text>
+              <Text style={styles.dangerButtonText}>{t('settings.buttons.clearHighscores')}</Text>
             </Pressable>
           </SettingsSection>
 
           {/* About */}
-          <SettingsSection title="About" icon="information-circle" color={colors.accent.success}>
+          <SettingsSection title={t('settings.sections.about')} icon="information-circle" color={colors.accent.success}>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Version</Text>
+              <Text style={styles.infoLabel}>{t('settings.labels.version')}</Text>
               <Text style={styles.infoValue}>{packageJson.version}</Text>
             </View>
           </SettingsSection>
 
           {/* Credits */}
           <View style={styles.credits}>
-            <Text style={styles.creditsText}>Made with Raccoon Software</Text>
+            <Text style={styles.creditsText}>{t('credits.madeWith')}</Text>
             <Image source={require('../assets/raccoon.png')} style={styles.raccoonSoftwareLogo} />
-            <Text style={styles.creditsSubtext}>LetterCrush © 2026</Text>
+            <Text style={styles.creditsSubtext}>{t('credits.copyright')}</Text>
           </View>
         </Animated.View>
       </ScrollView>

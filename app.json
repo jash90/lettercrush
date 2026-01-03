@@ -34,7 +34,6 @@
     },
     "plugins": [
       "expo-router",
-      "expo-sqlite",
       [
         "react-native-google-mobile-ads",
         {
@@ -98,6 +97,14 @@
         "expo-tracking-transparency",
         {
           "userTrackingPermission": "This identifier will be used to deliver personalized ads to you."
+        }
+      ],
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "project": "letter-crush",
+          "organization": "raccoon-software"
         }
       ]
     ],

@@ -21,6 +21,10 @@ interface SettingsToggleProps {
   label: string;
   /** Accessibility label for screen readers */
   accessibilityLabel: string;
+  /** Label to display when enabled (e.g., "ON") */
+  onLabel: string;
+  /** Label to display when disabled (e.g., "OFF") */
+  offLabel: string;
 }
 
 export const SettingsToggle = memo(function SettingsToggle({
@@ -30,6 +34,8 @@ export const SettingsToggle = memo(function SettingsToggle({
   iconDisabled,
   label,
   accessibilityLabel,
+  onLabel,
+  offLabel,
 }: SettingsToggleProps) {
   return (
     <Pressable
@@ -41,7 +47,7 @@ export const SettingsToggle = memo(function SettingsToggle({
     >
       <Text style={styles.toggleIcon}>{enabled ? iconEnabled : iconDisabled}</Text>
       <Text style={styles.toggleLabel}>{label}</Text>
-      <Text style={styles.toggleStatus}>{enabled ? 'ON' : 'OFF'}</Text>
+      <Text style={styles.toggleStatus}>{enabled ? onLabel : offLabel}</Text>
     </Pressable>
   );
 });

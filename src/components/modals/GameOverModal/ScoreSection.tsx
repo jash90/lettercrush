@@ -6,6 +6,7 @@
 
 import React, { memo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useScoreCountUp } from '../../../hooks';
 import { StarRating } from './StarRating';
 import { haptics } from '../../../utils/haptics';
@@ -25,6 +26,7 @@ export const ScoreSection = memo(function ScoreSection({
   isNewHighScore,
   visible,
 }: ScoreSectionProps) {
+  const { t } = useTranslation('game');
   const { displayValue, isComplete } = useScoreCountUp({
     targetValue: score,
     duration: 800,
@@ -39,7 +41,7 @@ export const ScoreSection = memo(function ScoreSection({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>SCORE</Text>
+      <Text style={styles.label}>{t('stats.score')}</Text>
       <Text style={styles.value}>{displayValue.toLocaleString()}</Text>
       <StarRating
         score={score}

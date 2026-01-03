@@ -69,10 +69,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       }
 
       // Default fallback UI using ErrorFallback component
+      // errorMessage is intentionally omitted to use translated default from ErrorFallback
       return (
         <ErrorFallback
           error={this.state.error ?? undefined}
-          errorMessage="The app encountered an unexpected error. Please try again."
           onReset={this.handleReset}
           showDevDetails
         />

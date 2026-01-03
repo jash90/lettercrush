@@ -20,6 +20,7 @@ import Animated, {
   SlideInUp,
   SlideOutDown,
 } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 import { haptics } from '../utils/haptics';
 import { useSettingsStore, settingsSelectors } from '../stores/settingsStore';
@@ -36,6 +37,8 @@ export const PauseModal = memo(function PauseModal({
   onResume,
   onQuit,
 }: PauseModalProps) {
+  const { t } = useTranslation('game');
+
   // Use persisted settings from store
   const soundEnabled = useSettingsStore(settingsSelectors.soundEnabled);
   const hapticsEnabled = useSettingsStore(settingsSelectors.hapticsEnabled);
@@ -69,22 +72,22 @@ export const PauseModal = memo(function PauseModal({
       haptics.warning();
     }
     Alert.alert(
-      'Quit Game?',
-      'Your current progress will be lost.',
+      t('quitAlert.title'),
+      t('quitAlert.message'),
       [
         {
-          text: 'Cancel',
+          text: t('quitAlert.cancel'),
           style: 'cancel',
         },
         {
-          text: 'Quit',
+          text: t('quitAlert.confirm'),
           style: 'destructive',
           onPress: onQuit,
         },
       ],
       { cancelable: true }
     );
-  }, [hapticsEnabled, onQuit]);
+  }, [hapticsEnabled, onQuit, t]);
 
   return (
     <Modal
@@ -104,7 +107,7 @@ export const PauseModal = memo(function PauseModal({
           exiting={SlideOutDown.duration(150)}
           style={styles.modal}
           accessibilityRole="alert"
-          accessibilityLabel="Game Paused"
+          accessibilityLabel={t('pause.accessibility')}
         >
           {/* Pause Icon */}
           <View style={styles.pauseIconContainer}>
@@ -112,7 +115,7 @@ export const PauseModal = memo(function PauseModal({
             <View style={styles.pauseBar} />
           </View>
 
-          <Text style={styles.title}>PAUSED</Text>
+          <Text style={styles.title}>{t('pause.title')}</Text>
 
           {/* Resume Button - Primary */}
           <Pressable
@@ -122,11 +125,11 @@ export const PauseModal = memo(function PauseModal({
             ]}
             onPress={handleResume}
             accessibilityRole="button"
-            accessibilityLabel="Resume Game"
-            accessibilityHint="Continues the game from where you left off"
+            accessibilityLabel={t('pause.resume')}
+            accessibilityHint={t('pause.resumeHint')}
           >
             <Text style={styles.resumeIcon}>▶</Text>
-            <Text style={styles.resumeText}>RESUME</Text>
+            <Text style={styles.resumeText}>{t('pause.resume')}</Text>
           </Pressable>
 
           {/* Settings Toggles */}
@@ -136,16 +139,20 @@ export const PauseModal = memo(function PauseModal({
               onToggle={handleToggleSound}
               iconEnabled="🔊"
               iconDisabled="🔇"
-              label="Sound"
-              accessibilityLabel="Sound"
+              label={t('pause.sound')}
+              accessibilityLabel={t('pause.sound')}
+              onLabel={t('toggle.on')}
+              offLabel={t('toggle.off')}
             />
             <SettingsToggle
               enabled={hapticsEnabled}
               onToggle={handleToggleHaptics}
               iconEnabled="📳"
               iconDisabled="📴"
-              label="Haptics"
-              accessibilityLabel="Haptics"
+              label={t('pause.haptics')}
+              accessibilityLabel={t('pause.haptics')}
+              onLabel={t('toggle.on')}
+              offLabel={t('toggle.off')}
             />
           </View>
 
@@ -157,11 +164,11 @@ export const PauseModal = memo(function PauseModal({
             ]}
             onPress={handleQuit}
             accessibilityRole="button"
-            accessibilityLabel="Quit Game"
-            accessibilityHint="Returns to the home screen. Progress will be lost."
+            accessibilityLabel={t('pause.quitGame')}
+            accessibilityHint={t('pause.quitHint')}
           >
             <Text style={styles.quitIcon}>🚪</Text>
-            <Text style={styles.quitText}>Quit Game</Text>
+            <Text style={styles.quitText}>{t('pause.quitGame')}</Text>
           </Pressable>
         </Animated.View>
       </Animated.View>

@@ -6,6 +6,7 @@ import React, { useEffect, useLayoutEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useNavigation } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { Grid } from '../src/components/Grid';
 import { ScoreDisplay } from '../src/components/Score';
 import { CurrentWord, ActionButtons } from '../src/components/WordBuilder';
@@ -18,6 +19,7 @@ import { useInterstitialAd } from '../src/hooks/useInterstitialAd';
 import { colors } from '../src/theme';
 
 export default function GameScreen() {
+  const { t } = useTranslation('game');
   const router = useRouter();
   const navigation = useNavigation();
   const {
@@ -79,7 +81,7 @@ export default function GameScreen() {
             style={styles.pauseButton}
             onPress={pauseGame}
             accessibilityRole="button"
-            accessibilityLabel="Pause game"
+            accessibilityLabel={t('pauseButton.accessibility')}
           >
             <View style={styles.pauseIcon}>
               <View style={styles.pauseBar} />
@@ -96,7 +98,7 @@ export default function GameScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.loading}>
           <ActivityIndicator size="large" color={colors.accent.primary} />
-          <Text style={styles.loadingText}>Loading game...</Text>
+          <Text style={styles.loadingText}>{t('loading')}</Text>
         </View>
       </SafeAreaView>
     );

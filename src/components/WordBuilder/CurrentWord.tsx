@@ -6,6 +6,7 @@
 
 import React, { memo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { colors, spacing, borderRadius, fontSize } from '../../theme';
 
 interface CurrentWordProps {
@@ -15,13 +16,14 @@ interface CurrentWordProps {
 }
 
 export const CurrentWord = memo(function CurrentWord({ word, error, combo }: CurrentWordProps) {
+  const { t } = useTranslation('game');
   const isEmpty = word.length === 0;
 
   return (
     <View style={styles.container}>
       <View style={styles.wordContainer}>
         {isEmpty ? (
-          <Text style={styles.placeholder}>Tap letters to spell a word...</Text>
+          <Text style={styles.placeholder}>{t('wordBuilder.placeholder')}</Text>
         ) : (
           <View style={styles.wordRow}>
             <Text style={styles.word}>{word}</Text>
@@ -41,8 +43,8 @@ export const CurrentWord = memo(function CurrentWord({ word, error, combo }: Cur
       {!isEmpty && !error && (
         <Text style={styles.hint}>
           {word.length < 3
-            ? `Need ${3 - word.length} more letter${3 - word.length > 1 ? 's' : ''}`
-            : 'Ready to submit!'
+            ? t('wordBuilder.needMore', { count: 3 - word.length })
+            : t('wordBuilder.ready')
           }
         </Text>
       )}

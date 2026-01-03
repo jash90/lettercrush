@@ -6,6 +6,7 @@
 import React, { memo } from 'react';
 import { Text, StyleSheet } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { colors, spacing, fontSize } from '../../../theme';
 
 interface NewHighScoreBadgeProps {
@@ -16,6 +17,8 @@ interface NewHighScoreBadgeProps {
 export const NewHighScoreBadge = memo(function NewHighScoreBadge({
   visible,
 }: NewHighScoreBadgeProps) {
+  const { t } = useTranslation('game');
+
   if (!visible) return null;
 
   return (
@@ -23,7 +26,7 @@ export const NewHighScoreBadge = memo(function NewHighScoreBadge({
       entering={FadeIn.delay(900).duration(300)}
       style={styles.badge}
     >
-      <Text style={styles.badgeText}>NEW RECORD!</Text>
+      <Text style={styles.badgeText}>{t('stats.newRecord')}</Text>
     </Animated.View>
   );
 });

@@ -18,6 +18,7 @@ import Animated, {
   SlideInUp,
   SlideOutDown,
 } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 import { GameOverReason } from '../types/game.types';
 import { haptics } from '../utils/haptics';
@@ -75,6 +76,7 @@ function normalizeProps(
 export const GameOverModal = memo(function GameOverModal(
   props: GameOverModalProps | LegacyGameOverModalProps
 ) {
+  const { t } = useTranslation('game');
   const { visible, gameData, onPlayAgain } = normalizeProps(props);
   const {
     score,
@@ -91,12 +93,12 @@ export const GameOverModal = memo(function GameOverModal(
   const getGameOverDisplay = () => {
     switch (gameOverReason) {
       case 'timeout':
-        return { emoji: '⏰', title: "TIME'S UP!" };
+        return { emoji: '⏰', title: t('gameOver.timesUp') };
       case 'strikes':
-        return { emoji: '❌', title: '3 STRIKES!' };
+        return { emoji: '❌', title: t('gameOver.strikes') };
       case 'noMoves':
       default:
-        return { emoji: '🏆', title: 'GAME OVER' };
+        return { emoji: '🏆', title: t('gameOver.title') };
     }
   };
 
@@ -133,7 +135,7 @@ export const GameOverModal = memo(function GameOverModal(
           exiting={SlideOutDown.duration(150)}
           style={styles.modal}
           accessibilityRole="alert"
-          accessibilityLabel={`Game Over. Final score: ${score}`}
+          accessibilityLabel={t('gameOver.accessibility', { score })}
         >
           <Text style={styles.trophy}>{emoji}</Text>
           <Text style={styles.title}>{title}</Text>
@@ -156,11 +158,11 @@ export const GameOverModal = memo(function GameOverModal(
               ]}
               onPress={handlePlayAgain}
               accessibilityRole="button"
-              accessibilityLabel="Play Again"
-              accessibilityHint="Start a new game"
+              accessibilityLabel={t('gameOver.playAgain')}
+              accessibilityHint={t('gameOver.playAgainHint')}
             >
               <Text style={styles.playAgainIcon}>🔄</Text>
-              <Text style={styles.playAgainText}>PLAY AGAIN</Text>
+              <Text style={styles.playAgainText}>{t('gameOver.playAgain')}</Text>
             </Pressable>
           </Animated.View>
         </Animated.View>

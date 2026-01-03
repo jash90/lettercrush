@@ -1,0 +1,263 @@
+{
+  "common": {
+    "loading": "Ładowanie...",
+    "appName": "LetterCrush",
+    "navigation": {
+      "menu": "Menu",
+      "selectLanguage": "Wybierz język"
+    },
+    "languageSelect": {
+      "title": "Wybierz język",
+      "playInEnglish": "Play in English",
+      "playInPolish": "Graj po polsku",
+      "hint": "Możesz to zmienić później w Ustawieniach"
+    },
+    "accessibility": {
+      "switchToEnglish": "Przełącz na angielski",
+      "switchToPolish": "Przełącz na polski"
+    },
+    "ads": {
+      "label": "Reklama",
+      "loading": "Ładowanie reklamy..."
+    },
+    "menu": {
+      "play": {
+        "title": "Graj",
+        "subtitle": "Rozpocznij nową grę"
+      },
+      "highscores": {
+        "title": "Najlepsze wyniki",
+        "subtitle": "Zobacz swoje rekordy"
+      },
+      "howToPlay": {
+        "title": "Jak grać",
+        "subtitle": "Poznaj zasady"
+      },
+      "settings": {
+        "title": "Ustawienia",
+        "subtitle": "Język, usuń dane"
+      },
+      "testSentry": {
+        "title": "Test Sentry",
+        "subtitle": "Wyślij testowy błąd"
+      }
+    },
+    "settings": {
+      "sections": {
+        "language": "Język",
+        "dictionary": "Słownik",
+        "data": "Dane",
+        "about": "O aplikacji"
+      },
+      "labels": {
+        "currentLanguage": "Aktualny język",
+        "wordsLoaded": "Załadowane słowa",
+        "version": "Wersja"
+      },
+      "buttons": {
+        "clearHighscores": "Wyczyść wszystkie wyniki"
+      },
+      "languages": {
+        "english": "English",
+        "polish": "Polski"
+      }
+    },
+    "stats": {
+      "bestScore": "Najlepszy wynik",
+      "gamesPlayed": "Rozegrane gry",
+      "averageScore": "Średni wynik",
+      "leaderboard": "Tabela wyników",
+      "empty": {
+        "title": "Brak wyników",
+        "subtitle": "Zagraj kilka gier, aby zobaczyć tutaj swoje wyniki!"
+      }
+    },
+    "alerts": {
+      "clearScores": {
+        "title": "Wyczyść wszystkie wyniki",
+        "message": "Czy na pewno chcesz usunąć wszystkie swoje rekordy? Tej operacji nie można cofnąć.",
+        "confirm": "Usuń",
+        "cancel": "Anuluj"
+      },
+      "done": {
+        "title": "Gotowe",
+        "scoresCleared": "Wszystkie wyniki zostały wyczyszczone."
+      }
+    },
+    "credits": {
+      "madeWith": "Stworzone przez Raccoon Software",
+      "copyright": "LetterCrush © 2026"
+    }
+  },
+  "game": {
+    "loading": "Ładowanie gry...",
+    "pauseButton": {
+      "accessibility": "Zatrzymaj grę"
+    },
+    "gameOver": {
+      "title": "KONIEC GRY",
+      "timesUp": "CZAS MINĄŁ!",
+      "strikes": "3 BŁĘDY!",
+      "playAgain": "ZAGRAJ PONOWNIE",
+      "accessibility": "Koniec gry. Wynik końcowy: {{score}}",
+      "playAgainHint": "Rozpocznij nową grę"
+    },
+    "pause": {
+      "title": "PAUZA",
+      "resume": "WZNÓW",
+      "sound": "Dźwięk",
+      "haptics": "Wibracje",
+      "quitGame": "Zakończ grę",
+      "accessibility": "Gra wstrzymana",
+      "resumeHint": "Kontynuuje grę od miejsca, w którym została przerwana",
+      "quitHint": "Powrót do ekranu głównego. Postęp zostanie utracony."
+    },
+    "quitAlert": {
+      "title": "Zakończyć grę?",
+      "message": "Twój aktualny postęp zostanie utracony.",
+      "confirm": "Zakończ",
+      "cancel": "Anuluj"
+    },
+    "stats": {
+      "title": "Statystyki",
+      "score": "WYNIK",
+      "time": "CZAS",
+      "strikes": "BŁĘDY",
+      "wordsFound": "Znalezione słowa",
+      "longestWord": "Najdłuższe słowo",
+      "bestCombo": "Najlepsze combo",
+      "moves": "Ruchy",
+      "movesMade": "Wykonane ruchy",
+      "highScore": "Rekord",
+      "newHighScore": "NOWY REKORD!",
+      "newRecord": "NOWY REKORD!",
+      "accessibility": "Statystyki gry"
+    },
+    "toggle": {
+      "on": "WŁ",
+      "off": "WYŁ"
+    },
+    "plurals": {
+      "wordsFound_one": "{{count}} słowo znalezione",
+      "wordsFound_few": "{{count}} słowa znalezione",
+      "wordsFound_many": "{{count}} słów znalezionych",
+      "points_one": "{{count}} punkt",
+      "points_few": "{{count}} punkty",
+      "points_many": "{{count}} punktów"
+    },
+    "actions": {
+      "loading": "Ładowanie...",
+      "checking": "Sprawdzanie...",
+      "wait": "Czekaj...",
+      "submit": "Zatwierdź",
+      "clear": "Wyczyść",
+      "buttonDisabled": "Przycisk nieaktywny",
+      "clearHint": "Wyczyść wybrane litery",
+      "submitHint": "Zatwierdź słowo do walidacji"
+    },
+    "wordBuilder": {
+      "placeholder": "Dotknij liter, aby ułożyć słowo...",
+      "needMore_one": "Potrzebujesz jeszcze {{count}} litery",
+      "needMore_few": "Potrzebujesz jeszcze {{count}} liter",
+      "needMore_many": "Potrzebujesz jeszcze {{count}} liter",
+      "ready": "Gotowe do zatwierdzenia!"
+    }
+  },
+  "tutorial": {
+    "objective": {
+      "title": "Cel gry",
+      "text": "Zamieniaj sąsiednie litery, aby tworzyć poprawne słowa (3+ liter). Słowa mogą być tworzone poziomo lub pionowo. Zdobądź jak najwięcej punktów!"
+    },
+    "howToSwap": {
+      "title": "Jak zamieniać",
+      "method1": {
+        "step1": "Dotknij kafelka z literą, aby go zaznaczyć",
+        "step2": "Dotknij sąsiedniego kafelka, aby je zamienić"
+      },
+      "or": "— LUB —",
+      "method2": {
+        "step1": "Przesuń palcem w dowolnym kierunku na kafelku",
+        "step2": "Kafelek zamieni się z sąsiednim"
+      }
+    },
+    "scoring": {
+      "title": "Punktacja",
+      "3letter": "Słowo 3-literowe",
+      "4letter": "Słowo 4-literowe",
+      "5letter": "Słowo 5-literowe",
+      "6letter": "Słowo 6+ literowe",
+      "combo": "Bonus combo",
+      "points": {
+        "3letter": "100 pkt",
+        "4letter": "200 pkt",
+        "5letter": "400 pkt",
+        "6letter": "800+ pkt",
+        "combo": "x1.5 za łańcuch"
+      },
+      "tip": "Dłuższe słowa i combo dają dodatkowe punkty!"
+    },
+    "languages": {
+      "title": "Języki",
+      "text": "Przełączaj między słownikami angielskim 🇬🇧 i polskim 🇵🇱 używając przełącznika języka na górze ekranu gry.",
+      "tip": "Każdy język ma własny słownik z popularnymi słowami."
+    },
+    "gameOver": {
+      "title": "Koniec gry",
+      "text": "Gra kończy się, gdy nie ma więcej dostępnych ruchów (żadne sąsiednie kafelki nie mogą być zamienione, aby utworzyć słowa).",
+      "tip": "Planuj z wyprzedzeniem, aby przedłużyć grę!"
+    },
+    "proTips": {
+      "title": "Porady",
+      "tips": [
+        "Szukaj popularnych wzorców słów jak 'NIE', 'POD', 'NAD'",
+        "Twórz reakcje łańcuchowe dla ogromnych bonusów combo",
+        "Dłuższe słowa dają wykładniczo więcej punktów",
+        "Nowe kafelki spadają z góry po dopasowaniach"
+      ]
+    }
+  },
+  "errors": {
+    "validation": {
+      "minLength": "Słowo musi mieć co najmniej 3 litery",
+      "notAdjacent": "Litery muszą być sąsiednie",
+      "invalidWord": "\"{{word}}\" nie jest poprawnym słowem",
+      "invalidWordStrike": "\"{{word}}\" nie jest poprawnym słowem. Błąd {{current}}/{{max}}",
+      "invalidWordStrikeFinal": "\"{{word}}\" nie jest poprawnym słowem. Błąd {{current}}/{{max}}!",
+      "genericError": "Wystąpił błąd. Spróbuj ponownie."
+    },
+    "blocked": {
+      "selection": {
+        "validating": "Proszę czekać, sprawdzam słowo...",
+        "matching": "Proszę czekać, dopasowywanie w toku...",
+        "cascading": "Proszę czekać, kafelki opadają...",
+        "refilling": "Proszę czekać, uzupełniam planszę...",
+        "paused": "Gra jest wstrzymana",
+        "gameOver": "Gra zakończona",
+        "selecting": "Wybieranie w toku",
+        "default": "Proszę czekać..."
+      },
+      "submission": {
+        "validating": "Już sprawdzam słowo...",
+        "matching": "Przetwarzam dopasowanie...",
+        "cascading": "Kafelki opadają...",
+        "refilling": "Uzupełniam planszę...",
+        "paused": "Gra jest wstrzymana",
+        "gameOver": "Gra zakończona",
+        "selecting": "Wybieranie w toku",
+        "default": "Proszę czekać..."
+      },
+      "dictionary": {
+        "loading": "Ładowanie słownika...",
+        "notReady": "Słownik się ładuje..."
+      }
+    },
+    "fallback": {
+      "title": "Ups!",
+      "subtitle": "Coś poszło nie tak",
+      "message": "Wystąpił nieoczekiwany błąd. Spróbuj ponownie.",
+      "details": "Szczegóły błędu:",
+      "retry": "Spróbuj ponownie",
+      "goHome": "Wróć do menu"
+    }
+  }
+}

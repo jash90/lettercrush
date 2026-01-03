@@ -9,15 +9,6 @@ global.__ExpoImportMetaRegistry = {
   set: jest.fn(),
 };
 
-// Mock expo modules that cause issues in tests
-jest.mock('expo-sqlite', () => ({
-  openDatabaseSync: jest.fn(() => ({
-    execSync: jest.fn(),
-    getAllSync: jest.fn(() => []),
-    runSync: jest.fn(),
-  })),
-}));
-
 // Mock expo module
 jest.mock('expo', () => ({
   registerRootComponent: jest.fn(),

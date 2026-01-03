@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
 export interface ErrorFallbackProps {
@@ -20,18 +21,19 @@ export function ErrorFallback({
   onReset,
   showDevDetails = false,
 }: ErrorFallbackProps) {
-  const displayMessage = errorMessage || error?.message || 'Something went wrong. Please try again.';
+  const { t } = useTranslation('errors');
+  const displayMessage = errorMessage || error?.message || t('fallback.message');
 
   return (
     <View style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.icon}>⚠️</Text>
-        <Text style={styles.title}>Oops!</Text>
+        <Text style={styles.title}>{t('fallback.title')}</Text>
         <Text style={styles.message}>{displayMessage}</Text>
 
         {showDevDetails && __DEV__ && error && (
           <View style={styles.errorDetails}>
-            <Text style={styles.errorTitle}>Error Details:</Text>
+            <Text style={styles.errorTitle}>{t('fallback.details')}</Text>
             <Text style={styles.errorText}>{error.message}</Text>
           </View>
         )}
@@ -41,9 +43,9 @@ export function ErrorFallback({
             style={styles.button}
             onPress={onReset}
             accessibilityRole="button"
-            accessibilityLabel="Try Again"
+            accessibilityLabel={t('fallback.retry')}
           >
-            <Text style={styles.buttonText}>Try Again</Text>
+            <Text style={styles.buttonText}>{t('fallback.retry')}</Text>
           </Pressable>
         )}
       </View>

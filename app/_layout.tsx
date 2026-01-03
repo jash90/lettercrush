@@ -5,6 +5,15 @@
  * Loads dictionary on app start
  */
 
+// Intl polyfills for Hermes engine (must be imported before any i18n usage)
+import '@formatjs/intl-locale/polyfill';
+import '@formatjs/intl-pluralrules/polyfill-force';
+import '@formatjs/intl-pluralrules/locale-data/en';
+import '@formatjs/intl-pluralrules/locale-data/pl';
+
+// Import i18n configuration (initializes i18next)
+import '../src/i18n';
+
 import * as Sentry from '@sentry/react-native';
 
 // Initialize Sentry before any React rendering
@@ -22,6 +31,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StyleSheet, View, ActivityIndicator, Text, Platform } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
+import { useTranslation } from 'react-i18next';
 import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
 import { useLanguageStore } from '../src/stores/languageStore';
@@ -31,10 +41,12 @@ import { getAdService } from '../src/services/AdService';
 import { colors } from '../src/theme';
 import { logger } from '../src/utils/logger';
 
-export default function RootLayout() {
+export default Sentry.wrap(function RootLayout() {
+  const { t } = useTranslation('common');
+  const { t: tErrors } = useTranslation('errors');
   const [isReady, setIsReady] = useState(false);
   const [isDictionaryLoaded, setIsDictionaryLoaded] = useState(false);
-  const [loadingMessage, setLoadingMessage] = useState('Loading...');
+  const [loadingMessage, setLoadingMessage] = useState<string | null>(null);
   const segments = useSegments();
 
   const { isLoaded, isFirstRun, language, loadLanguage } = useLanguageStore(
@@ -67,7 +79,7 @@ export default function RootLayout() {
     setIsDictionaryLoaded(false);
 
     const loadDictionary = async () => {
-      setLoadingMessage('Loading dictionary...');
+      setLoadingMessage('dictionary');
       try {
         await initDatabase();
         const result = await seedDictionaryIfNeeded(language);
@@ -109,12 +121,15 @@ export default function RootLayout() {
 
   // Show loading screen while checking first-run status or loading dictionary
   if (!isLoaded || !isDictionaryLoaded || !isReady) {
+    const displayMessage = loadingMessage === 'dictionary'
+      ? tErrors('blocked.dictionary.loading')
+      : t('loading');
     return (
       <GestureHandlerRootView style={styles.container}>
         <SafeAreaProvider>
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.accent.primary} />
-            <Text style={styles.loadingText}>{loadingMessage}</Text>
+            <Text style={styles.loadingText}>{displayMessage}</Text>
           </View>
         </SafeAreaProvider>
       </GestureHandlerRootView>
@@ -138,42 +153,42 @@ export default function RootLayout() {
           <Stack.Screen
             name="index"
             options={{
-              title: 'LetterCrush',
+              title: t('appName'),
               headerShown: false,
             }}
           />
           <Stack.Screen
             name="game"
             options={{
-              title: 'LetterCrush',
-              headerBackTitle: 'Menu',
+              title: t('appName'),
+              headerBackTitle: t('navigation.menu'),
             }}
           />
           <Stack.Screen
             name="stats"
             options={{
-              title: 'Highscores',
-              headerBackTitle: 'Menu',
+              title: t('menu.highscores.title'),
+              headerBackTitle: t('navigation.menu'),
             }}
           />
           <Stack.Screen
             name="tutorial"
             options={{
-              title: 'How to Play',
-              headerBackTitle: 'Menu',
+              title: t('menu.howToPlay.title'),
+              headerBackTitle: t('navigation.menu'),
             }}
           />
           <Stack.Screen
             name="settings"
             options={{
-              title: 'Settings',
-              headerBackTitle: 'Menu',
+              title: t('menu.settings.title'),
+              headerBackTitle: t('navigation.menu'),
             }}
           />
           <Stack.Screen
             name="language-select"
             options={{
-              title: 'Select Language',
+              title: t('navigation.selectLanguage'),
               headerShown: false,
             }}
           />
@@ -182,7 +197,7 @@ export default function RootLayout() {
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
