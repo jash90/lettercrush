@@ -18,10 +18,27 @@ import * as Sentry from '@sentry/react-native';
 
 // Initialize Sentry before any React rendering
 Sentry.init({
-  dsn: 'https://7b2077e0d2f12d39a4c1f02cdd00aa81@o4509198041800704.ingest.de.sentry.io/4509198056153168',
+  dsn: 'https://1c94dcfe1f81ea60f62d5e2ab5e3959f@o303506.ingest.us.sentry.io/4510647836409856',
   debug: __DEV__,
   environment: __DEV__ ? 'development' : 'production',
   tracesSampleRate: __DEV__ ? 1.0 : 0.2,
+
+  sendDefaultPii: !__DEV__,
+  // Set tracesSampleRate to 1.0 to capture 100% of transactions for tracing.
+  // We recommend adjusting this value in production.
+  // Learn more at
+  // https://docs.sentry.io/platforms/react-native/configuration/options/#traces-sample-rate
+  // Enable logs to be sent to Sentry
+  // Learn more at https://docs.sentry.io/platforms/react-native/logs/
+  enableLogs: !__DEV__,
+  // profilesSampleRate is relative to tracesSampleRate.
+  // Here, we'll capture profiles for 100% of transactions.
+  profilesSampleRate: !__DEV__ ? 1.0 : 0.1,
+  // Record session replays for 100% of errors and 10% of sessions
+  replaysOnErrorSampleRate: !__DEV__ ? 1.0 : 0.1,
+  replaysSessionSampleRate: !__DEV__ ? 0.1 : 0.01,
+  integrations: [Sentry.mobileReplayIntegration()],
+
 });
 
 import { useEffect, useState } from 'react';

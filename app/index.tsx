@@ -8,6 +8,7 @@
     StyleSheet,
     Animated,
     Image,
+    Alert,
   } from 'react-native';
   import { SafeAreaView } from 'react-native-safe-area-context';
   import { router } from 'expo-router';
@@ -92,7 +93,15 @@
             title={t('menu.testSentry.title')}
             subtitle={t('menu.testSentry.subtitle')}
             color="#FF4444"
-            onPress={ () => { Sentry.captureException(new Error('Test Sentry Error')) }}
+            onPress={async () => {
+              try {
+                Sentry.captureException(new Error('Test Sentry Error'));
+                await Sentry.flush();
+                Alert.alert('Sentry Test', 'Error sent to Sentry! Check your dashboard.');
+              } catch (error) {
+                Alert.alert('Sentry Test', `Failed to send: ${error}`);
+              }
+            }}
           />
         </View>
       </Animated.View>
