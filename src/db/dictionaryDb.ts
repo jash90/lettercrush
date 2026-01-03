@@ -27,8 +27,10 @@ export function isValidWord(word: string): boolean {
 
 /**
  * Load words into dictionary (platform-adaptive)
+ * @param words - Array of words to load
+ * @param language - Language code for storage key (optional, defaults to stored or 'en')
  */
-export async function loadDictionary(words: string[]): Promise<number> {
+export async function loadDictionary(words: string[], language?: string): Promise<number> {
   let insertedCount = 0;
 
   // Load into in-memory Set (both platforms)
@@ -42,12 +44,18 @@ export async function loadDictionary(words: string[]): Promise<number> {
 
   if (isWeb) {
     localStorage.setItem('lettercrush_dictionary_loaded', 'true');
+    if (language) {
+      localStorage.setItem('lettercrush_seeded_language', language);
+    }
     logger.log(`[Dictionary] Web: Loaded ${insertedCount} words into memory`);
   } else {
     // Native: Also persist to MMKV
-    const language = getSeededLanguageFromStorage() ?? 'en';
-    saveDictionary(language, Array.from(dictionary));
-    logger.log(`[Dictionary] MMKV: Loaded ${insertedCount} words`);
+    const lang = language ?? getSeededLanguageFromStorage() ?? 'en';
+    saveDictionary(lang, Array.from(dictionary));
+    if (language) {
+      setSeededLanguageInStorage(language);
+    }
+    logger.log(`[Dictionary] MMKV: Loaded ${insertedCount} words for ${lang}`);
   }
 
   return insertedCount;

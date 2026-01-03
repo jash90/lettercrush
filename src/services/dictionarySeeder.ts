@@ -7,10 +7,8 @@ import type { Language } from '../types/game.types';
 import {
   loadDictionary,
   clearDictionary,
-  isDictionarySeeded,
   getSeededLanguage,
   setSeededLanguage,
-  getWordCount,
 } from '../db/dictionaryDb';
 import { initDatabase } from '../db';
 import { logger } from '../utils/logger';
@@ -59,32 +57,21 @@ export interface SeedResult {
 }
 
 /**
- * Seed dictionary if needed (not already seeded with same language)
+ * Seed dictionary on every app start
+ * Always reloads dictionary to ensure fresh data
  */
 export async function seedDictionaryIfNeeded(
   language: Language
 ): Promise<SeedResult> {
+  // Ensure database is initialized before operations
+  await initDatabase();
+
   const seededLanguage = getSeededLanguage();
-  const isSeeded = isDictionarySeeded();
 
-  // Already seeded with same language - skip
-  if (isSeeded && seededLanguage === language) {
-    const wordCount = getWordCount();
+  // Always clear existing dictionary before seeding
+  if (seededLanguage) {
     logger.log(
-      `[DictionarySeeder] Already seeded with ${language}, ${wordCount} words`
-    );
-    return {
-      success: true,
-      wordCount,
-      language,
-      wasReseeded: false,
-    };
-  }
-
-  // Need to reseed - clear existing if any
-  if (isSeeded) {
-    logger.log(
-      `[DictionarySeeder] Language changed from ${seededLanguage} to ${language}, reseeding...`
+      `[DictionarySeeder] Clearing previous dictionary (${seededLanguage}) before seeding ${language}...`
     );
     await clearDictionary();
   }
@@ -95,7 +82,7 @@ export async function seedDictionaryIfNeeded(
 
   const dictionary = getDictionaryForLanguage(language);
   const words = flattenDictionary(dictionary);
-  const wordCount = await loadDictionary(words);
+  const wordCount = await loadDictionary(words, language);
 
   await setSeededLanguage(language);
 
@@ -126,7 +113,7 @@ export async function forceReseedDictionary(
 
   const dictionary = getDictionaryForLanguage(language);
   const words = flattenDictionary(dictionary);
-  const wordCount = await loadDictionary(words);
+  const wordCount = await loadDictionary(words, language);
 
   await setSeededLanguage(language);
 

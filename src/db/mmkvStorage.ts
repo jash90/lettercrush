@@ -6,6 +6,8 @@
 import { isWeb } from './platform';
 import { logger } from '../utils/logger';
 
+import { MMKV, createMMKV } from 'react-native-mmkv';
+
 // MMKV Storage Keys
 export const MMKV_KEYS = {
   DICTIONARY_EN: 'dict_en',
@@ -23,8 +25,7 @@ export interface StoredHighscore {
   createdAt: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let mmkvInstance: any = null;
+let mmkvInstance: MMKV | null = null;
 
 /**
  * Initialize MMKV storage (native only)
@@ -35,10 +36,14 @@ export function initMMKV(): void {
     return;
   }
 
+  // Idempotency guard - only initialize once
+  if (mmkvInstance !== null) {
+    logger.log('[MMKV] Already initialized, skipping');
+    return;
+  }
+
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { MMKV } = require('react-native-mmkv');
-    mmkvInstance = new MMKV();
+    mmkvInstance = createMMKV();
     logger.log('[MMKV] Initialized successfully');
   } catch (error) {
     logger.error('[MMKV] Initialization failed:', error);
@@ -48,8 +53,7 @@ export function initMMKV(): void {
 /**
  * Get MMKV instance
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function getMMKV(): any {
+export function getMMKV(): MMKV | null {
   return mmkvInstance;
 }
 
@@ -122,14 +126,14 @@ export function clearDictionaryStorage(language?: string): void {
   try {
     if (language) {
       const key = getDictionaryKey(language);
-      mmkvInstance.delete(key);
+      mmkvInstance.remove(key);
     } else {
       // Clear all dictionaries
-      mmkvInstance.delete(MMKV_KEYS.DICTIONARY_EN);
-      mmkvInstance.delete(MMKV_KEYS.DICTIONARY_PL);
+      mmkvInstance.remove(MMKV_KEYS.DICTIONARY_EN);
+      mmkvInstance.remove(MMKV_KEYS.DICTIONARY_PL);
     }
-    mmkvInstance.delete(MMKV_KEYS.DICTIONARY_LOADED);
-    mmkvInstance.delete(MMKV_KEYS.SEEDED_LANGUAGE);
+    mmkvInstance.remove(MMKV_KEYS.DICTIONARY_LOADED);
+    mmkvInstance.remove(MMKV_KEYS.SEEDED_LANGUAGE);
     logger.log('[MMKV] Dictionary cleared');
   } catch (error) {
     logger.error('[MMKV] Failed to clear dictionary:', error);
@@ -234,7 +238,7 @@ export function clearHighscoresStorage(): void {
   if (isWeb || !mmkvInstance) return;
 
   try {
-    mmkvInstance.delete(MMKV_KEYS.HIGHSCORES);
+    mmkvInstance.remove(MMKV_KEYS.HIGHSCORES);
     logger.log('[MMKV] Highscores cleared');
   } catch (error) {
     logger.error('[MMKV] Failed to clear highscores:', error);

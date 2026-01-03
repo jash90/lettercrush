@@ -6,8 +6,8 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { getWordValidator } from '../engine/WordValidator';
-import { isDictionarySeeded, loadDictionary, getWordCount, clearDictionary } from '../db';
 import { getDictionary } from '../data/dictionaries';
+import { seedDictionaryIfNeeded } from '../services/dictionarySeeder';
 import type { Language } from '../types/game.types';
 import { logger } from '../utils/logger';
 
@@ -58,18 +58,10 @@ export function useDictionary(options: UseDictionaryOptions): UseDictionaryRetur
       validator.loadDictionary(dictionary);
       setWordCount(dictionary.length);
 
-      // Seed database for native platforms
+      // Seed database using the proper seeder service
       try {
-        const seeded = await isDictionarySeeded();
-        const dbWordCount = getWordCount();
-        const expectedCount = dictionary.length;
-
-        // Reload if not seeded OR if word count doesn't match (dictionary was updated)
-        if (!seeded || dbWordCount !== expectedCount) {
-          console.log(`[useDictionary] Dictionary reload: DB has ${dbWordCount}, expected ${expectedCount}`);
-          await clearDictionary();
-          await loadDictionary(dictionary);
-        }
+        const result = await seedDictionaryIfNeeded(lang);
+        logger.log(`[useDictionary] Seeded: ${result.wordCount} words, wasReseeded: ${result.wasReseeded}`);
       } catch (dbError) {
         // Database errors are non-fatal - validator still works in-memory
         logger.warn('[useDictionary] Database seeding warning:', dbError);
@@ -123,19 +115,15 @@ export function useDictionary(options: UseDictionaryOptions): UseDictionaryRetur
 
 // Standalone function for use outside React components (e.g., in services)
 export async function loadDictionaryForLanguage(language: Language): Promise<void> {
+  // Load dictionary into WordValidator (in-memory for game logic)
   const dictionary = getDictionary(language);
   const validator = getWordValidator();
   validator.loadDictionary(dictionary);
 
+  // Seed database using the proper seeder service
   try {
-    const seeded = await isDictionarySeeded();
-    const dbWordCount = getWordCount();
-    const expectedCount = dictionary.length;
-
-    if (!seeded || dbWordCount !== expectedCount) {
-      await clearDictionary();
-      await loadDictionary(dictionary);
-    }
+    const result = await seedDictionaryIfNeeded(language);
+    logger.log(`[loadDictionaryForLanguage] Seeded: ${result.wordCount} words, wasReseeded: ${result.wasReseeded}`);
   } catch (error) {
     logger.warn('[loadDictionaryForLanguage] Database seeding warning:', error);
   }
