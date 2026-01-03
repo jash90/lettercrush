@@ -1,4 +1,4 @@
-# WordGrid UX - Interactions Specification
+# LetterCrush UX - Interactions Specification
 
 **Parent Document:** [UX Overview](./overview.md)
 
@@ -12,17 +12,16 @@
 ┌─────────────────────────────────────────────────────────────────────┐
 │                      GESTURE RECOGNITION SYSTEM                      │
 │                                                                      │
-│  Input Layer                                                         │
+│  Input Layer (React Native Gesture Handler)                          │
 │  ├── Touch Begin → Position capture, tile identification            │
-│  ├── Touch Move → Direction detection, swap preview                 │
-│  ├── Touch End → Action execution, animation trigger                │
-│  └── Touch Cancel → State reset, cleanup                            │
+│  ├── Touch End → Selection toggle, action dispatch                  │
+│  └── Touch Cancel → State cleanup                                   │
 │                                                                      │
 │  Recognition Pipeline                                                │
 │  1. Raw input capture (<16ms)                                       │
-│  2. Gesture classification (<8ms)                                   │
-│  3. Intent validation (<8ms)                                        │
-│  4. Action dispatch (<16ms)                                         │
+│  2. Tile identification (<8ms)                                      │
+│  3. Selection state update (<8ms)                                   │
+│  4. Visual feedback (<16ms)                                         │
 │  Total: <50ms end-to-end latency                                    │
 └─────────────────────────────────────────────────────────────────────┘
 ```
@@ -31,35 +30,23 @@
 
 | Gesture | Recognition | Action | Feedback |
 |---------|-------------|--------|----------|
-| Tap | <200ms, <10px movement | Select tile | Highlight + haptic |
-| Swipe | >10px, <500ms | Swap tiles | Trail + sound |
-| Drag | Hold + move | Drag tile | Shadow + scale |
-| Long Press | >500ms hold | Show word hints | Ripple + popup |
-| Double Tap | 2 taps <300ms | Activate power-up | Flash + sound |
-| Pinch | 2 fingers | Zoom grid (iPad) | Scale animation |
+| Tap | <200ms, <10px movement | Select/deselect tile | Highlight + haptic |
+| Long Press | >500ms hold | Show letter info (optional) | Tooltip |
+| Button Tap | Standard | Execute action | Scale + haptic |
 
-### 1.3 Gesture Parameters
+### 1.3 Gesture Configuration
 
-```csharp
-public class GestureConfig
-{
-    // Tap Detection
-    public float TapMaxDuration = 0.2f;      // 200ms
-    public float TapMaxDistance = 10f;        // 10 pixels
+```typescript
+// React Native Gesture Handler configuration
+const gestureConfig = {
+  // Tap Detection
+  tapMaxDuration: 200, // ms
+  tapMaxDistance: 10,  // pixels
 
-    // Swipe Detection
-    public float SwipeMinDistance = 20f;      // 20 pixels
-    public float SwipeMaxDuration = 0.5f;     // 500ms
-    public float SwipeAngleTolerance = 30f;   // degrees
-
-    // Long Press
-    public float LongPressDuration = 0.5f;    // 500ms
-    public float LongPressMaxMovement = 5f;   // 5 pixels
-
-    // Double Tap
-    public float DoubleTapMaxInterval = 0.3f; // 300ms
-    public float DoubleTapMaxDistance = 20f;  // 20 pixels
-}
+  // Touch Response
+  feedbackDelay: 0,    // immediate
+  hitSlop: 10,         // extends touch area
+};
 ```
 
 ---
@@ -70,154 +57,144 @@ public class GestureConfig
 
 **Selection Flow**:
 ```
-Touch Down
+Touch on Tile
     │
-    ├── On Valid Tile?
-    │       ├── YES → Highlight tile
-    │       │         Play select sound
-    │       │         Trigger haptic (light)
+    ├── Is tile already selected?
+    │       ├── YES → Deselect tile
+    │       │         Remove from word builder
+    │       │         Update selection order
     │       │
-    │       └── NO → Ignore input
+    │       └── NO → Select tile
+    │                Add to word builder
+    │                Show selection number
     │
-Touch Move
-    │
-    ├── Distance > Threshold?
-    │       ├── YES → Start swap gesture
-    │       └── NO → Maintain selection
-    │
-Touch Up
-    │
-    └── Process selection or swap
+    └── Update visual feedback
+        Play haptic (if enabled)
 ```
 
 **Visual States**:
 
-| State | Visual | Duration |
-|-------|--------|----------|
-| Normal | Default appearance | - |
-| Hover/Select | Glow outline, scale 1.05 | Instant |
-| Pressed | Darker, scale 0.95 | While pressed |
-| Swapping | Trail effect, position tween | 200ms |
-| Invalid | Red flash, shake | 300ms |
-| Matched | Green glow, dissolve | 400ms |
+| State | Visual | Implementation |
+|-------|--------|----------------|
+| Normal | Default appearance | Base GridCell style |
+| Selected | Highlighted + number badge | `isSelected` prop |
+| Valid word | Green border on submit | Reanimated animation |
+| Invalid word | Red flash, shake | Reanimated animation |
+| Matched | Fade out, clear | MatchedWordOverlay |
 
-### 2.2 Swap Mechanics
+### 2.2 Selection Mechanics
 
-**Swap Interaction**:
+**Tap-to-Select System**:
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                         SWAP INTERACTION                             │
+│                         TAP-TO-SELECT                                │
 │                                                                      │
-│  Method 1: Swipe                                                     │
-│  ┌───┐                ┌───┐                                         │
-│  │ A │ ──────────────→│ B │  Swipe from A toward B                  │
-│  └───┘                └───┘                                         │
+│  Step 1: Tap letter "S"                                             │
+│  ┌───┐                                                              │
+│  │ S │ ← Tap here, shows "1" badge                                 │
+│  │ 1 │                                                              │
+│  └───┘                                                              │
 │                                                                      │
-│  Method 2: Two-Tap                                                   │
-│  ┌───┐                ┌───┐                                         │
-│  │ A │ (tap 1)  then  │ B │ (tap 2)  Select A, then tap B           │
-│  └───┘                └───┘                                         │
+│  Step 2: Tap letter "T"                                             │
+│  ┌───┐  ┌───┐                                                       │
+│  │ S │  │ T │ ← Tap here, shows "2" badge                          │
+│  │ 1 │  │ 2 │                                                       │
+│  └───┘  └───┘                                                       │
 │                                                                      │
-│  Method 3: Drag                                                      │
-│  ┌───┐    drag    ┌───┐                                             │
-│  │ A │ ═══════════│ B │  Drag A onto B position                     │
-│  └───┘            └───┘                                             │
+│  Step 3: Continue building word...                                  │
+│  ┌───┐  ┌───┐  ┌───┐  ┌───┐                                        │
+│  │ S │  │ T │  │ A │  │ R │                                        │
+│  │ 1 │  │ 2 │  │ 3 │  │ 4 │                                        │
+│  └───┘  └───┘  └───┘  └───┘                                        │
+│                                                                      │
+│  Word Builder Display: "STAR"                                       │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-**Swap Validation**:
+**Deselection**:
+- Tap selected tile to remove from selection
+- Selection numbers update automatically
+- Word builder updates in real-time
 
-| Check | Condition | Response |
-|-------|-----------|----------|
-| Adjacency | Tiles must be orthogonally adjacent | Reject non-adjacent |
-| Animation | No swap during animation | Queue or reject |
-| Frozen | Frozen tile swap attempt | Show frozen indicator |
-| Valid Move | Must create word OR Tutorial mode | Allow or reject |
+### 2.3 Selection Animation
 
-### 2.3 Swap Animation Sequence
+```typescript
+// Using react-native-reanimated
+const selectionAnimation = {
+  duration: 150, // ms
+  easing: Easing.out(Easing.ease),
 
-```
-Frame 0 (0ms)
-├── Capture start positions
-├── Play swap start sound
-└── Trigger swap haptic
+  selected: {
+    scale: 1.05,
+    borderColor: '#4CAF50',
+    borderWidth: 2,
+  },
 
-Frames 1-12 (0-200ms)
-├── Ease-out-back position tween
-├── Scale pulse (1.0 → 1.1 → 1.0)
-└── Trail particle effect
-
-Frame 12 (200ms)
-├── Check for word matches
-├── If match: Start match sequence
-└── If no match: Animate swap back (200ms)
+  deselected: {
+    scale: 1.0,
+    borderColor: 'transparent',
+    borderWidth: 0,
+  },
+};
 ```
 
 ---
 
-## 3. Word Detection Feedback
+## 3. Word Submission Feedback
 
-### 3.1 Word Found Sequence
+### 3.1 Valid Word Sequence
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                    WORD FOUND ANIMATION SEQUENCE                     │
+│                    VALID WORD ANIMATION SEQUENCE                     │
 │                                                                      │
-│  Phase 1: Highlight (0-200ms)                                       │
+│  Phase 1: Validation (0-100ms)                                      │
+│  ├── Word checked against dictionary                                │
+│  └── Success determined                                             │
+│                                                                      │
+│  Phase 2: Highlight (100-300ms)                                     │
 │  ├── Green glow on matched tiles                                    │
-│  ├── Word text popup appears                                        │
-│  └── Success sound plays                                            │
+│  ├── Score popup appears                                            │
+│  └── Success haptic + sound                                         │
 │                                                                      │
-│  Phase 2: Score Display (200-600ms)                                 │
-│  ├── Score number flies to total                                    │
-│  ├── Combo multiplier shows (if applicable)                         │
-│  └── Tiles start dissolve animation                                 │
-│                                                                      │
-│  Phase 3: Clear (600-1000ms)                                        │
-│  ├── Tiles particle burst                                           │
-│  ├── Empty spaces created                                           │
+│  Phase 3: Clear (300-600ms)                                         │
+│  ├── Tiles fade/dissolve animation                                  │
+│  ├── MatchedWordOverlay shows word                                  │
 │  └── Clear sound plays                                              │
 │                                                                      │
-│  Phase 4: Refill (1000-1500ms)                                      │
-│  ├── New tiles drop from top                                        │
-│  ├── Bounce on landing                                              │
-│  └── Check for cascade matches                                      │
+│  Phase 4: Cascade (600-1200ms)                                      │
+│  ├── Remaining tiles fall (gravity)                                 │
+│  ├── New tiles spawn from top                                       │
+│  └── Check for automatic matches                                    │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-### 3.2 Score Popup Animation
-
-```csharp
-public class ScorePopupConfig
-{
-    // Initial position: Above matched word center
-    public Vector2 StartOffset = new Vector2(0, 50);
-
-    // Animation
-    public float Duration = 0.8f;
-    public float RiseDistance = 100f;
-    public AnimationCurve ScaleCurve; // 0→1.2→1.0
-    public AnimationCurve AlphaCurve; // 1→1→0
-
-    // Combo styling
-    public Color[] ComboColors = {
-        Color.white,    // x1
-        Color.yellow,   // x2
-        Color.orange,   // x3
-        Color.red,      // x4
-        Color.magenta   // x5+
-    };
-}
-```
-
-### 3.3 Invalid Word Feedback
+### 3.2 Invalid Word Feedback
 
 | Feedback Type | Visual | Audio | Haptic |
 |---------------|--------|-------|--------|
-| Invalid Swap | Red flash, shake | Error buzz | Medium impact |
-| No Word | Tiles return | Soft thud | Light tap |
-| Already Used | Ghost highlight | Already sound | None |
-| Too Short | Red X, "3+ letters" | Warning | Light |
+| Not in dictionary | Red flash, shake | Error buzz | Medium impact |
+| Too short | "3+ letters" message | Warning tone | Light tap |
+
+### 3.3 Score Popup Animation
+
+```typescript
+// Score popup configuration
+const scorePopupConfig = {
+  startPosition: { y: -20 }, // Above matched word
+  endPosition: { y: -60 },   // Float up
+  duration: 800,             // ms
+  fadeOut: true,
+
+  comboColors: [
+    '#FFFFFF', // x1 - white
+    '#FFD700', // x2 - gold
+    '#FF6B00', // x3 - orange
+    '#FF0000', // x4 - red
+    '#FF00FF', // x5+ - magenta
+  ],
+};
+```
 
 ---
 
@@ -232,323 +209,217 @@ public class ScorePopupConfig
 │  Word Cleared                                                        │
 │       │                                                              │
 │       ▼                                                              │
-│  Gravity Applied (tiles fall 200ms)                                 │
+│  Gravity Applied (tiles fall)                                       │
 │       │                                                              │
 │       ▼                                                              │
-│  New Tiles Spawned (drop from top 300ms)                            │
+│  New Tiles Spawned (drop from top)                                  │
 │       │                                                              │
 │       ▼                                                              │
-│  Check New Words ◄──────────────────────────────┐                   │
-│       │                                          │                   │
-│       ├── Words Found?                          │                   │
-│       │       │                                 │                   │
-│       │       ├── YES → Clear words            │                   │
-│       │       │         Increment combo         │                   │
-│       │       │         Loop back ──────────────┘                   │
+│  Check for Auto-Matches                                             │
+│       │                                                              │
+│       ├── Match Found?                                              │
+│       │       ├── YES → Clear + increment combo                     │
+│       │       │         Loop back to gravity                        │
 │       │       │                                                      │
 │       │       └── NO → End cascade                                  │
+│       │                Set phase to 'idle'                          │
 │       │                Enable input                                 │
 │       │                                                              │
-│       └── Animation complete, process next                          │
+│       └── Continue gameplay                                         │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
 ### 4.2 Cascade Timing
 
-| Phase | Duration | Easing |
-|-------|----------|--------|
-| Tile Clear | 400ms | Ease-out |
-| Gravity Fall | 200ms per row | Ease-in-bounce |
-| New Tile Drop | 300ms | Ease-out-bounce |
-| Match Check | <50ms | - |
-| Inter-cascade | 100ms | Delay |
+| Phase | Duration | Animation |
+|-------|----------|-----------|
+| Tile Clear | 300ms | Fade out + scale down |
+| Gravity Fall | 200ms per row | Spring physics |
+| New Tile Drop | 300ms | Bounce on landing |
+| Match Check | <50ms | Instant |
+| Inter-cascade | 100ms | Brief pause |
 
 ### 4.3 Combo Display
 
 ```
 Combo Level 1 (Base)
-├── "x1" small text
-└── Normal colors
+├── "x1" text (if shown)
+└── Normal score colors
 
 Combo Level 2
-├── "x2" medium text, yellow
-├── Screen edge glow
-└── Intensified sound
+├── "x2" larger text, gold
+├── Score multiplied
+└── Enhanced feedback
 
-Combo Level 3
-├── "x3" large text, orange
-├── Screen shake (subtle)
-└── Epic sound
-
-Combo Level 4+
-├── "x4+" huge text, flames
-├── Full screen effects
-├── Camera zoom pulse
-└── Epic fanfare
+Combo Level 3+
+├── "x3+" emphasized text
+├── Screen effects (optional)
+└── Celebratory sound
 ```
 
 ---
 
-## 5. Power-Up Interactions
+## 5. Button Interactions
 
-### 5.1 Power-Up Activation
-
-**Activation Flow**:
-```
-Tap Power-Up Icon
-    │
-    ├── Has power-up available?
-    │       │
-    │       ├── YES → Enter targeting mode
-    │       │         Show usage hint
-    │       │         Highlight valid targets
-    │       │
-    │       └── NO → Show purchase prompt
-    │                Animate icon shake
-    │
-Targeting Mode
-    │
-    ├── Tap valid target → Execute power-up
-    │                      Play effect
-    │                      Decrement count
-    │
-    ├── Tap invalid → Show invalid feedback
-    │
-    └── Tap cancel/outside → Exit targeting mode
-```
-
-### 5.2 Power-Up Effects
-
-| Power-Up | Targeting | Effect Animation | Duration |
-|----------|-----------|------------------|----------|
-| Bomb | Single tile | Explosion particles, radial clear | 600ms |
-| Shuffle | None (instant) | All tiles spin and relocate | 800ms |
-| Time Boost | None (instant) | Timer flash, +15s counter | 400ms |
-| Hint | None (auto) | Word highlight pulse | 2000ms |
-| Freeze | None (instant) | Frost overlay, timer stops | 5000ms |
-
-### 5.3 Power-Up Visual States
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                     POWER-UP BUTTON STATES                           │
-│                                                                      │
-│  Normal                  Targeting                Cooldown           │
-│  ┌────────┐             ┌────────┐              ┌────────┐          │
-│  │  💣    │             │  💣    │              │  💣    │          │
-│  │  x3    │             │ SELECT │              │  0:05  │          │
-│  └────────┘             └────────┘              └────────┘          │
-│  Full opacity           Pulsing glow            Grayed + timer      │
-│  Badge count            Cancel hint             Countdown overlay   │
-│                                                                      │
-│  Empty                   Locked                  Promoted            │
-│  ┌────────┐             ┌────────┐              ┌────────┐          │
-│  │  💣    │             │  🔒    │              │  💣    │          │
-│  │  +     │             │ Lv.10  │              │  NEW!  │          │
-│  └────────┘             └────────┘              └────────┘          │
-│  "+" icon               Lock + level            "NEW" badge         │
-│  Tap → Shop             Tap → Info              Glow animation      │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 6. Menu Interactions
-
-### 6.1 Button Interactions
-
-**Button States**:
+### 5.1 Button States
 
 | State | Visual | Transition |
 |-------|--------|------------|
 | Normal | Default style | - |
-| Hover (iPad) | Slight scale, glow | 100ms |
-| Pressed | Scale 0.95, darken | Instant |
+| Pressed | Scale 0.95, darker | Instant |
 | Disabled | Grayed, no interaction | - |
 | Loading | Spinner overlay | Fade in |
 
-**Button Animation**:
-```csharp
-public class ButtonConfig
-{
-    public float PressedScale = 0.95f;
-    public float HoverScale = 1.02f;
-    public float PressDuration = 0.1f;
-    public float ReleaseDuration = 0.15f;
-    public Color PressedTint = new Color(0.8f, 0.8f, 0.8f);
-}
-```
+### 5.2 Button Animation (Pressable)
 
-### 6.2 List/Scroll Interactions
+```typescript
+// Button press animation
+const buttonAnimation = {
+  pressedScale: 0.95,
+  pressedOpacity: 0.8,
+  duration: 100, // ms
 
-| Gesture | Action | Physics |
-|---------|--------|---------|
-| Vertical Swipe | Scroll | Momentum + bounce |
-| Horizontal Swipe | Page/category change | Snap to nearest |
-| Pull Down | Refresh (if applicable) | Rubber band |
-| Tap Item | Select | Highlight → navigate |
-
-### 6.3 Modal Interactions
-
-**Modal Presentation**:
-```
-Background → Dim to 50% black (200ms)
-Modal → Slide up + scale (300ms, ease-out-back)
-Content → Fade in (200ms delay)
-```
-
-**Modal Dismissal**:
-```
-Tap outside → Dismiss
-Swipe down → Dismiss (with velocity threshold)
-Close button → Dismiss
-Back gesture → Dismiss
+  // Using Pressable component
+  style: ({ pressed }) => ({
+    transform: [{ scale: pressed ? 0.95 : 1 }],
+    opacity: pressed ? 0.8 : 1,
+  }),
+};
 ```
 
 ---
 
-## 7. Haptic Feedback System
+## 6. Haptic Feedback System
 
-### 7.1 Haptic Patterns
+### 6.1 Haptic Patterns
 
-| Event | iOS (UIFeedbackGenerator) | Android (Vibration) |
-|-------|---------------------------|---------------------|
-| Tile Select | Selection (light) | 10ms light |
-| Valid Swap | Impact (medium) | 20ms medium |
-| Invalid Move | Notification (error) | 50ms + 50ms |
-| Word Found | Impact (heavy) | 30ms heavy |
-| Combo | Notification (success) | Pattern: 20-40-20ms |
-| Level Up | Notification (success) × 3 | Pattern: long celebration |
-| Button Press | Impact (light) | 10ms light |
-| Power-Up | Impact (rigid) | 25ms heavy |
+| Event | iOS | Android |
+|-------|-----|---------|
+| Tile Select | Selection (light) | 10ms vibration |
+| Valid Word | Impact (medium) | 20ms vibration |
+| Invalid Word | Notification (error) | Pattern: 50-50ms |
+| Combo | Impact (heavy) | 30ms vibration |
+| Button Press | Impact (light) | 10ms vibration |
+| Game Over | Notification (warning) | Pattern: 100-100ms |
 
-### 7.2 Haptic Settings
+### 6.2 Haptic Implementation
 
-```csharp
-public enum HapticIntensity
-{
-    Off = 0,
-    Light = 1,    // Only critical feedback
-    Medium = 2,   // Standard feedback (default)
-    Heavy = 3     // All feedback enhanced
-}
+```typescript
+// expo-haptics usage
+import * as Haptics from 'expo-haptics';
 
-public class HapticConfig
-{
-    public HapticIntensity Intensity = HapticIntensity.Medium;
-    public bool EnableInBackground = false;
-    public float MinInterval = 0.05f; // Prevent haptic spam
-}
+const haptics = {
+  tileSelect: () =>
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light),
+
+  validWord: () =>
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium),
+
+  invalidWord: () =>
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error),
+
+  combo: () =>
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy),
+};
+```
+
+### 6.3 Haptic Settings
+
+Controlled via `settingsStore`:
+- User can enable/disable haptic feedback
+- Setting persisted to AsyncStorage
+
+---
+
+## 7. Audio Feedback System
+
+### 7.1 Sound Effects
+
+| Event | Sound | Volume |
+|-------|-------|--------|
+| Tile Select | Soft click | 0.5 |
+| Valid Word (short) | Ding | 0.7 |
+| Valid Word (long) | Chime | 0.8 |
+| Invalid Word | Buzz | 0.4 |
+| Cascade | Rising tone | 0.7 |
+| Combo | Power chord | 0.8 |
+| Timer Warning | Tick | 0.6 |
+| Game Over | End tone | 0.7 |
+
+### 7.2 Audio Settings
+
+Controlled via `settingsStore`:
+- User can enable/disable sound effects
+- Setting persisted to AsyncStorage
+
+---
+
+## 8. Timer Interactions
+
+### 8.1 Timer Display States
+
+| Time Remaining | Visual | Audio |
+|----------------|--------|-------|
+| >30s | Normal display | None |
+| 30s-10s | Warning color (yellow) | None |
+| <10s | Critical color (red) | Tick sound |
+| 0s | Game over | End sound |
+
+### 8.2 Timer Animation
+
+```typescript
+// Timer warning animation
+const timerWarningAnimation = {
+  // Pulse effect when critical
+  critical: {
+    scale: [1, 1.1, 1],
+    duration: 500,
+    loop: true,
+  },
+
+  // Color transitions
+  colors: {
+    normal: '#FFFFFF',
+    warning: '#FFD700',
+    critical: '#FF0000',
+  },
+};
 ```
 
 ---
 
-## 8. Audio Feedback System
+## 9. Modal Interactions
 
-### 8.1 Sound Effects
+### 9.1 Modal Presentation
 
-| Event | Sound | Volume | Variation |
-|-------|-------|--------|-----------|
-| Tile Select | Soft click | 0.5 | 3 pitches |
-| Tile Swap | Whoosh | 0.6 | Direction-based |
-| Invalid Move | Buzz | 0.4 | None |
-| Word Found (3-4) | Ding | 0.7 | Note based on length |
-| Word Found (5+) | Chime | 0.8 | Chord progression |
-| Word Found (7+) | Fanfare | 0.9 | Full melody |
-| Cascade | Rising tone | 0.7 | Pitch increases |
-| Combo | Power chord | 0.8 | Intensity with level |
-| Timer Warning | Tick | 0.6 | Speed increases |
-| Game Over | Sad tone | 0.7 | None |
-| Level Up | Victory | 1.0 | None |
-| Achievement | Unlock chime | 0.9 | None |
+```typescript
+// Modal animation configuration
+const modalAnimation = {
+  // Backdrop fade
+  backdropOpacity: 0.5,
+  backdropDuration: 200, // ms
 
-### 8.2 Adaptive Audio
-
-```
-Game State → Audio Response
-
-Normal Play:
-├── Background music: Full
-├── SFX: Normal volume
-└── Ambient: Enabled
-
-Timer Critical (<15s):
-├── Background music: Tense layer added
-├── SFX: Slightly louder
-└── Heartbeat sound optional
-
-Combo Active:
-├── Background music: Intensity layer
-├── SFX: Enhanced, reverb
-└── Crowd/cheer ambience
-
-Pause:
-├── Background music: Low-pass filter
-├── SFX: Muted
-└── Menu music crossfade
+  // Content slide up
+  contentTranslateY: [300, 0],
+  contentDuration: 300, // ms
+  contentEasing: Easing.out(Easing.back(1.5)),
+};
 ```
 
----
+### 9.2 Pause Modal
 
-## 9. Tutorial Interactions
+| Action | Result |
+|--------|--------|
+| Tap Resume | Close modal, resume timer |
+| Tap Home | Navigate to home screen |
+| Back gesture | Same as Resume |
 
-### 9.1 Tutorial Flow
+### 9.3 Game Over Modal
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                      TUTORIAL SEQUENCE                               │
-│                                                                      │
-│  Step 1: Welcome                                                     │
-│  ├── "Welcome to WordGrid!"                                         │
-│  ├── Tap anywhere to continue                                       │
-│  └── Highlight: None                                                │
-│                                                                      │
-│  Step 2: The Grid                                                    │
-│  ├── "This is your letter grid"                                     │
-│  ├── Grid highlight pulse                                           │
-│  └── Tap to continue                                                │
-│                                                                      │
-│  Step 3: First Swap                                                  │
-│  ├── "Swap letters to form words"                                   │
-│  ├── Arrow showing swap direction                                   │
-│  ├── Only allow guided swap                                         │
-│  └── Auto-continue on success                                       │
-│                                                                      │
-│  Step 4: Word Detection                                              │
-│  ├── "Great! You formed [WORD]!"                                    │
-│  ├── Word highlight                                                 │
-│  └── Score explanation                                              │
-│                                                                      │
-│  Step 5: Power-Ups                                                   │
-│  ├── "Use power-ups to help"                                        │
-│  ├── Power-up bar highlight                                         │
-│  └── Free power-up to try                                           │
-│                                                                      │
-│  Step 6: Goal                                                        │
-│  ├── "Find as many words as possible!"                              │
-│  ├── Timer explanation                                              │
-│  └── "Tap PLAY to start!"                                           │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-### 9.2 Tutorial Overlay
-
-| Element | Style | Interaction |
-|---------|-------|-------------|
-| Spotlight | Circular mask on target | Pass-through to target |
-| Overlay | 70% black | Blocks non-target taps |
-| Tooltip | Rounded card with arrow | Position auto-adjusts |
-| Hand Icon | Animated pointing/swiping | Loops until action taken |
-| Skip Button | Top-right, subtle | Confirm before skip |
-
-### 9.3 Contextual Hints
-
-| Trigger | Hint | Display |
-|---------|------|---------|
-| No move 10s | "Hint: Swap adjacent tiles" | Subtle tooltip |
-| Low score | "Try longer words for more points" | Between games |
-| Unused power-up | "Don't forget your power-ups!" | Glow on icon |
-| Streak at risk | "Play daily to keep your streak!" | Push notification |
+| Action | Result |
+|--------|--------|
+| Tap Play Again | Show interstitial ad → Start new game |
+| Tap Home | Navigate to home screen |
 
 ---
 
@@ -559,44 +430,58 @@ Pause:
 | Metric | Target | Critical |
 |--------|--------|----------|
 | Touch-to-highlight | <16ms | <33ms |
-| Swap animation start | <50ms | <100ms |
+| Selection update | <16ms | <33ms |
 | Word validation | <50ms | <100ms |
 | Score update | <16ms | <33ms |
-| Full cascade | <2000ms | <3000ms |
+| Full cascade | <1500ms | <2000ms |
 
 ### 10.2 Animation Optimization
 
-```csharp
-public class AnimationOptimization
-{
-    // Use object pooling for frequently created objects
-    public bool UsePooling = true;
+```typescript
+// Animation best practices
+const animationOptimization = {
+  // Use native driver where possible
+  useNativeDriver: true,
 
-    // Batch similar animations
-    public bool BatchAnimations = true;
+  // Batch state updates
+  batchUpdates: true,
 
-    // Reduce particle count on low-end devices
-    public float ParticleMultiplier = 1.0f; // 0.5 for low-end
-
-    // Skip non-essential animations if frame drop detected
-    public bool AdaptiveQuality = true;
-
-    // Pre-warm animations during loading
-    public bool PrewarmAnimations = true;
-}
+  // Reduce complexity on low-end devices
+  reducedMotion: Platform.select({
+    ios: UIManager.getConstants().AccessibilityReduceMotion,
+    android: false,
+  }),
+};
 ```
 
 ### 10.3 Reduced Motion Mode
 
 | Normal | Reduced Motion |
 |--------|----------------|
-| Tile swap animation | Instant swap |
+| Tile selection animation | Instant selection |
 | Score fly animation | Inline update |
 | Cascade drop | Fast drop, no bounce |
-| Particle effects | Disabled |
 | Screen transitions | Fade only |
-| Background motion | Static |
 
 ---
 
-*Generated by BMAD PRD Workflow v1.0*
+## 11. Accessibility
+
+### 11.1 Touch Targets
+
+| Element | Minimum Size |
+|---------|--------------|
+| Grid tiles | 44×44pt |
+| Buttons | 44×44pt |
+| Settings toggles | 44×44pt |
+
+### 11.2 Color Accessibility
+
+- High contrast between tiles and background
+- Selected state clearly distinguishable
+- Error states use multiple cues (color + animation)
+
+---
+
+*Updated for LetterCrush React Native + Expo implementation*
+*Generated by BMAD UX Workflow v2.0*

@@ -15,7 +15,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "pl.lettercrush.app"
+      "bundleIdentifier": "pl.lettercrush.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -93,6 +96,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "26d50a6e-4ddc-4b7d-bd14-d24a06808f4b"
+      }
     }
   }
 }

@@ -1,6 +1,10 @@
 # Dependencies
 node_modules/
 
+# Claude Flow / Swarm
+.claude-flow/
+.swarm/
+
 # Expo
 .expo/
 .expo-shared/

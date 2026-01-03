@@ -1,4 +1,4 @@
-# WordGrid TSD - Technical Requirements
+# LetterCrush TSD - Technical Requirements
 
 **Parent Document:** [TSD Overview](./overview.md)
 
@@ -10,31 +10,30 @@
 
 | Metric | Target | Critical Threshold | Measurement |
 |--------|--------|-------------------|-------------|
-| Frame Rate | 60 FPS | 30 FPS (low-end) | Unity Profiler |
-| Input Latency | <16ms | <33ms | Timestamp delta |
-| Word Validation | <50ms | <100ms | Profiler |
-| Grid Animation | <500ms | <750ms | Animation time |
-| Scene Load | <1s | <2s | Load timer |
-| Memory Usage | <300MB | <400MB | Memory profiler |
+| Frame Rate | 60 FPS | 30 FPS (low-end) | React Native Profiler |
+| Input Latency | <16ms | <33ms | Gesture handler timing |
+| Word Validation | <50ms | <100ms | SQLite query time |
+| Grid Animation | <500ms | <750ms | Reanimated timing |
+| Screen Load | <1s | <2s | Navigation timing |
+| Memory Usage | <100MB | <150MB | Expo memory tools |
 
 ### 1.2 Startup Performance
 
 | Phase | Target | Activities |
 |-------|--------|------------|
-| Cold Start | <3s | App launch to main menu |
+| Cold Start | <3s | App launch to home screen |
 | Warm Start | <1s | Resume from background |
-| Level Load | <1s | Mode selection to gameplay |
-| Dictionary Load | <500ms | Language dictionary init |
+| Game Load | <1s | Home to gameplay |
+| Dictionary Load | <500ms | SQLite dictionary init |
 
-### 1.3 Network Performance
+### 1.3 Bundle Performance
 
-| Metric | Target | Fallback |
+| Metric | Target | Strategy |
 |--------|--------|----------|
-| API Response | <500ms | Cached data |
-| Cloud Sync | <2s | Queue offline |
-| Leaderboard Fetch | <1s | Show cached |
-| Ad Load | <3s | Skip to gameplay |
-| Network Timeout | 10s | Graceful failure |
+| iOS Bundle | <20MB | Code splitting, asset optimization |
+| Android APK | <25MB | Hermes engine, ProGuard |
+| JS Bundle | <5MB | Tree shaking, lazy loading |
+| Dictionary Data | <2MB per language | SQLite compression |
 
 ---
 
@@ -44,10 +43,10 @@
 
 | Requirement | Specification | Notes |
 |-------------|---------------|-------|
-| Minimum iOS | 14.0 | Drop 13.x support |
+| Minimum iOS | 14.0 | Required for modern APIs |
 | Target iOS | Latest stable | Currently 17.x |
 | Devices | iPhone 6s+ | A9 chip minimum |
-| iPad Support | Universal | Adaptive layout |
+| iPad Support | Universal | Responsive layout |
 | Architecture | arm64 | No 32-bit support |
 | App Store | Guidelines 5.0+ | Latest compliance |
 
@@ -55,19 +54,17 @@
 
 | Feature | Implementation |
 |---------|----------------|
-| Sign In with Apple | Required for iOS 13+ |
-| App Tracking Transparency | ATT prompt required |
-| StoreKit 2 | IAP implementation |
-| Game Center | Leaderboards, achievements |
-| Push Notifications | APNs integration |
-| Widget Support | Daily challenge widget (v2.0) |
+| App Tracking Transparency | ATT prompt for ads |
+| Haptic Feedback | expo-haptics |
+| Safe Area | react-native-safe-area-context |
+| AdMob | react-native-google-mobile-ads |
 
 ### 2.2 Android Requirements
 
 | Requirement | Specification | Notes |
 |-------------|---------------|-------|
-| Minimum API | 26 (Android 8.0) | Oreo baseline |
-| Target API | 34+ | Latest requirement |
+| Minimum API | 26 (Android 8.0) | Required for AdMob SDK |
+| Target API | 34+ | Latest Play Store requirement |
 | Architecture | arm64-v8a, armeabi-v7a | Dual ABI |
 | Play Store | Guidelines 2024 | Latest compliance |
 
@@ -75,12 +72,10 @@
 
 | Feature | Implementation |
 |---------|----------------|
-| Google Play Sign-In | OAuth 2.0 |
-| Play Billing Library | v5+ |
-| Firebase Cloud Messaging | Push notifications |
-| Play Games Services | Leaderboards, achievements |
-| App Bundle | AAB distribution |
-| Dynamic Delivery | On-demand assets |
+| Hermes Engine | Enabled by default |
+| ProGuard | Minification enabled |
+| Haptic Feedback | expo-haptics |
+| AdMob | react-native-google-mobile-ads |
 
 ### 2.3 Device Compatibility
 
@@ -95,18 +90,57 @@
 
 ---
 
-## 3. Reliability Requirements
+## 3. Technology Stack
 
-### 3.1 Stability Metrics
+### 3.1 Core Framework
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| React Native | 0.81.5 | Cross-platform framework |
+| Expo | 54.0.30 | Development platform |
+| TypeScript | 5.3 | Type-safe development |
+| Node.js | 18+ | Development runtime |
+
+### 3.2 State & Data
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| Zustand | 5.0 | State management |
+| expo-sqlite | 16.x | Local database |
+| expo-secure-store | Latest | Encrypted storage |
+| @react-native-async-storage | Latest | Key-value storage |
+
+### 3.3 UI & Animation
+
+| Technology | Purpose |
+|------------|---------|
+| react-native-reanimated | Native animations |
+| expo-linear-gradient | Gradient backgrounds |
+| @expo/vector-icons | Icon library |
+| react-native-safe-area-context | Safe area handling |
+
+### 3.4 Ads & Monetization
+
+| Technology | Purpose |
+|------------|---------|
+| react-native-google-mobile-ads | AdMob integration |
+| Interstitial ads | Game over screen |
+| Banner ads | (Optional) |
+
+---
+
+## 4. Reliability Requirements
+
+### 4.1 Stability Metrics
 
 | Metric | Target | Measurement |
 |--------|--------|-------------|
-| Crash Rate | <0.5% | Crashlytics |
+| Crash Rate | <0.5% | Expo crash reports |
 | ANR Rate | <0.1% | Play Console |
 | Session Stability | 99.5% | Analytics |
-| Data Persistence | 99.9% | User reports |
+| Data Persistence | 99.9% | SQLite reliability |
 
-### 3.2 Error Handling Strategy
+### 4.2 Error Handling Strategy
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -114,91 +148,44 @@
 │                                                              │
 │  Error Type          │ Response           │ User Impact      │
 │  ────────────────────┼────────────────────┼─────────────────│
-│  Network Timeout     │ Retry 3x, offline  │ Seamless         │
-│  Auth Failure        │ Re-authenticate    │ Login prompt     │
-│  IAP Failure         │ Restore + retry    │ Purchase modal   │
-│  Dictionary Error    │ Fallback dict      │ Degraded         │
-│  Save Failure        │ Local queue        │ Transparent      │
-│  Crash Recovery      │ Auto-resume        │ Minimal loss     │
+│  SQLite Error        │ Reinit database    │ Seamless         │
+│  Dictionary Error    │ Reload dictionary  │ Brief delay      │
+│  Ad Load Failure     │ Skip ad            │ Transparent      │
+│  State Corruption    │ Reset game state   │ Game restart     │
+│  Render Error        │ ErrorBoundary      │ Fallback UI      │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 3.3 Offline Capability Matrix
+### 4.3 Offline Capability
 
-| Feature | Offline Support | Sync Strategy |
-|---------|-----------------|---------------|
-| Campaign Mode | ✅ Full | Queue progress |
-| Classic Mode | ✅ Full | Queue scores |
-| Daily Challenge | ⚠️ Partial | Cache 24h |
-| PvP Mode | ❌ None | Require connection |
-| Leaderboards | ⚠️ Cached | Read-only |
-| IAP | ❌ None | Require connection |
-| Achievements | ✅ Full | Queue updates |
-| Power-ups | ✅ Full | Sync on connect |
+| Feature | Offline Support | Notes |
+|---------|-----------------|-------|
+| Gameplay | ✅ Full | All game logic local |
+| Dictionary | ✅ Full | SQLite database |
+| Highscores | ✅ Full | Local SQLite storage |
+| Settings | ✅ Full | SecureStore/AsyncStorage |
+| Ads | ⚠️ Partial | Skip if unavailable |
 
 ---
 
-## 4. Security Requirements
+## 5. Security Requirements
 
-### 4.1 Data Security
+### 5.1 Data Security
 
-| Requirement | Implementation | Standard |
-|-------------|----------------|----------|
-| Transport Security | HTTPS/TLS 1.3 | Industry |
-| Data at Rest | AES-256 encryption | FIPS 140-2 |
-| API Authentication | OAuth 2.0 + JWT | RFC 6749 |
-| Session Management | Secure tokens | OWASP |
-| PII Protection | Encryption + access control | GDPR |
+| Requirement | Implementation |
+|-------------|----------------|
+| Sensitive Data | expo-secure-store |
+| Language Preference | AsyncStorage |
+| Highscores | SQLite (local only) |
+| No Cloud Sync | Privacy-first design |
 
-### 4.2 Authentication Requirements
+### 5.2 Code Security
 
-| Method | Implementation | Priority |
-|--------|----------------|----------|
-| Email/Password | Firebase Auth | P0 |
-| Google Sign-In | OAuth 2.0 | P0 |
-| Apple Sign-In | Sign In with Apple | P0 (iOS) |
-| Facebook Login | Facebook SDK | P1 |
-| Guest Mode | Anonymous auth + migration | P0 |
-
-### 4.3 Compliance Requirements
-
-| Regulation | Requirements | Implementation |
-|------------|--------------|----------------|
-| GDPR | Data export, deletion, consent | In-app tools |
-| CCPA | California privacy rights | Opt-out support |
-| COPPA | Children's privacy | Age gate (if needed) |
-| App Store | Platform guidelines | Continuous compliance |
-| Play Store | Policy compliance | Continuous compliance |
-
----
-
-## 5. Scalability Requirements
-
-### 5.1 Concurrent User Targets
-
-| Milestone | Users | Infrastructure |
-|-----------|-------|----------------|
-| Launch | 10,000 | Base tier |
-| Month 3 | 50,000 | Scale tier 1 |
-| Month 6 | 100,000+ | Enterprise tier |
-
-### 5.2 Database Performance
-
-| Metric | Target | Optimization |
-|--------|--------|--------------|
-| Read Latency | <50ms P95 | Index optimization |
-| Write Latency | <100ms P95 | Batch writes |
-| Query Performance | <100ms P95 | Query planning |
-| Connection Pool | 100 concurrent | Pool management |
-
-### 5.3 CDN Requirements
-
-| Content Type | Caching | Distribution |
-|--------------|---------|--------------|
-| Static Assets | 30 days | Global CDN |
-| Dictionary Files | 7 days | Regional |
-| User Avatars | 24 hours | Edge cached |
-| Config | 1 hour | Dynamic |
+| Measure | Implementation |
+|---------|----------------|
+| Hermes Bytecode | Compiled JS (Android) |
+| No API Keys in Code | Environment variables |
+| Secure Dependencies | Regular audit |
 
 ---
 
@@ -211,26 +198,24 @@
 | Tutorial Completion | >85% | Analytics |
 | Onboarding Time | <2 minutes | Session timer |
 | First Game Time | <30 seconds | Event tracking |
-| Control Responsiveness | <100ms | User feedback |
+| Control Responsiveness | <100ms | Gesture timing |
 
 ### 6.2 Accessibility Requirements
 
 | Requirement | Implementation | Standard |
 |-------------|----------------|----------|
-| Color Blind Support | Alternative palettes | WCAG 2.1 |
+| Color Blind Support | Theme colors | WCAG 2.1 |
 | Font Scaling | System settings | Platform native |
 | Touch Targets | 44×44pt minimum | Apple HIG |
-| Screen Reader | VoiceOver/TalkBack | Platform API |
-| Reduced Motion | Option available | WCAG 2.1 |
+| Reduced Motion | Reanimated option | WCAG 2.1 |
 
 ### 6.3 Localization Requirements
 
-| Requirement | v1.0 | v2.0+ |
+| Requirement | v1.0 | Notes |
 |-------------|------|-------|
-| Languages | Polish, English | +German, Spanish, French |
-| RTL Support | No | Planned |
-| Date/Number Format | Locale-aware | Yes |
-| Currency Display | Platform locale | Yes |
+| Languages | Polish, English | Full dictionary support |
+| RTL Support | No | Not required for v1.0 |
+| Date/Number Format | Locale-aware | Via React Native |
 
 ---
 
@@ -238,96 +223,94 @@
 
 ### 7.1 Test Coverage Targets
 
-| Test Type | Coverage Target | Automation |
-|-----------|-----------------|------------|
-| Unit Tests | >80% | NUnit |
-| Integration Tests | >70% | Unity Test Runner |
-| E2E Tests | Critical paths | Appium |
-| Performance Tests | All modes | Custom |
+| Test Type | Coverage Target | Framework |
+|-----------|-----------------|-----------|
+| Unit Tests | >80% | Jest |
+| Integration Tests | >70% | Jest |
+| E2E Tests | Critical paths | Detox (optional) |
 
 ### 7.2 Testing Environments
 
 | Environment | Purpose | Data |
 |-------------|---------|------|
-| Local | Developer testing | Mock |
-| CI | Automated builds | Mock |
-| Staging | QA testing | Sanitized |
-| Beta | External testing | Production |
+| Development | Local testing | Mock |
+| Expo Go | Quick preview | Real |
+| Simulator/Emulator | Platform testing | Real |
+| Device | Final validation | Real |
 
 ### 7.3 Quality Gates
 
 | Gate | Criteria | Blocking |
 |------|----------|----------|
-| Code Review | 1 approval | Yes |
+| TypeScript | No errors | Yes |
+| ESLint | No errors | Yes |
 | Unit Tests | 100% pass | Yes |
-| Integration Tests | 100% pass | Yes |
-| Performance | Meet targets | Yes |
-| Security Scan | No critical issues | Yes |
+| Build | Successful | Yes |
 
 ---
 
-## 8. Monitoring Requirements
+## 8. Build Requirements
 
-### 8.1 Application Monitoring
-
-| Metric | Tool | Alert Threshold |
-|--------|------|-----------------|
-| Crash Rate | Crashlytics | >1% |
-| ANR Rate | Play Console | >0.5% |
-| Error Rate | Firebase | >2% |
-| Load Time | Analytics | >5s |
-
-### 8.2 Business Metrics
-
-| Metric | Tool | Frequency |
-|--------|------|-----------|
-| DAU/MAU | Analytics | Real-time |
-| Retention | Analytics | Daily |
-| Revenue | Store Console | Real-time |
-| ARPDAU | Custom | Daily |
-
-### 8.3 Infrastructure Monitoring
-
-| Metric | Tool | Alert Threshold |
-|--------|------|-----------------|
-| API Latency | Firebase | >500ms P95 |
-| Error Rate | Cloud Functions | >1% |
-| Database | Firestore Console | >100ms |
-| CDN | CloudFlare | Cache hit <90% |
-
----
-
-## 9. Development Requirements
-
-### 9.1 Build Requirements
+### 8.1 Development
 
 | Requirement | Specification |
 |-------------|---------------|
-| Unity Version | 2022.3 LTS |
-| .NET Version | Standard 2.1 |
-| iOS SDK | Latest Xcode |
-| Android SDK | API 34 |
-| Build Time | <30 minutes |
+| Node.js | 18+ |
+| npm/yarn | Latest stable |
+| Expo CLI | Latest |
+| Xcode | 15+ (iOS builds) |
+| Android Studio | Latest (Android builds) |
 
-### 9.2 Code Quality Standards
+### 8.2 Build Commands
+
+```bash
+# Development
+npm start                    # Start Expo dev server
+npm run ios                  # Run on iOS simulator
+npm run android              # Run on Android emulator
+
+# Production
+npx expo export --platform ios      # iOS bundle
+npx expo export --platform android  # Android bundle
+eas build --platform ios            # iOS build
+eas build --platform android        # Android build
+
+# Testing
+npm test                     # Run Jest tests
+npm run lint                 # ESLint check
+npm run typecheck            # TypeScript check
+```
+
+### 8.3 Code Quality Standards
 
 | Standard | Tool | Threshold |
 |----------|------|-----------|
-| Code Style | .editorconfig | Enforced |
-| Static Analysis | Rider inspections | No errors |
-| Complexity | Custom rules | <10 cyclomatic |
-| Documentation | XML docs | Public APIs |
-
-### 9.3 Version Control
-
-| Aspect | Requirement |
-|--------|-------------|
-| VCS | Git |
-| Branching | GitFlow |
-| Commits | Conventional commits |
-| Code Review | Required for main |
-| CI Integration | Unity Cloud Build |
+| Code Style | ESLint + Prettier | Enforced |
+| Type Safety | TypeScript strict | No errors |
+| Complexity | ESLint rules | Reasonable |
+| Documentation | JSDoc (optional) | Public APIs |
 
 ---
 
-*Generated by BMAD PRD Workflow v1.0*
+## 9. Monitoring Requirements
+
+### 9.1 Application Monitoring
+
+| Metric | Tool | Alert Threshold |
+|--------|------|-----------------|
+| Crash Rate | Expo/Sentry | >1% |
+| Error Rate | Expo | >2% |
+| Load Time | Analytics | >5s |
+
+### 9.2 Business Metrics
+
+| Metric | Tool | Frequency |
+|--------|------|-----------|
+| Sessions | Analytics | Real-time |
+| Retention | Analytics | Daily |
+| Ad Revenue | AdMob Console | Real-time |
+
+---
+
+*Updated for LetterCrush React Native + Expo stack*
+*Generated by BMAD TSD Workflow v2.0*

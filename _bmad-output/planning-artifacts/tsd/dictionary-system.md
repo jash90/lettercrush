@@ -1,4 +1,4 @@
-# WordGrid TSD - Dictionary System
+# LetterCrush TSD - Dictionary System
 
 **Parent Document:** [TSD Overview](./overview.md)
 
@@ -6,14 +6,14 @@
 
 ## 1. Overview
 
-The Dictionary System is a critical performance component responsible for word validation, providing sub-50ms lookup times for 200,000+ words per language.
+The Dictionary System is a critical performance component responsible for word validation, providing sub-50ms lookup times using SQLite database storage.
 
 ### 1.1 System Requirements
 
 | Requirement | Specification | Rationale |
 |-------------|---------------|-----------|
 | Lookup Time | <50ms | Responsive UX |
-| Memory Footprint | <15MB per language | Mobile constraints |
+| Memory Footprint | <5MB per language | Mobile constraints |
 | Offline Support | Full functionality | Core requirement |
 | Load Time | <500ms | Fast startup |
 | Languages v1.0 | Polish, English | Market priority |
@@ -22,41 +22,54 @@ The Dictionary System is a critical performance component responsible for word v
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Language Selection UI | ✅ Implemented | Toggle in header (🇬🇧 EN \| 🇵🇱 PL) |
-| Language Persistence | ✅ Implemented | AsyncStorage-backed |
-| Polish Dictionary | ✅ Implemented | 300+ words (no diacritics) |
-| English Dictionary | ✅ Implemented | 300+ words |
+| Language Selection UI | ✅ Implemented | Settings + onboarding screens |
+| Language Persistence | ✅ Implemented | Zustand + AsyncStorage |
+| Polish Dictionary | ✅ Implemented | ~300 words (MVP) |
+| English Dictionary | ✅ Implemented | ~300 words (MVP) |
 | Language-aware Grid | ✅ Implemented | Letter weights per language |
-| Dynamic Switching | ✅ Implemented | Resets game on change |
+| Dynamic Switching | ✅ Implemented | Reloads dictionary on change |
 
-**Implementation Files:**
-- `src/stores/languageStore.ts` - Zustand store with AsyncStorage persistence
-- `src/data/dictionaries/` - Language-specific word lists
-- `src/components/LanguageSelector.tsx` - Toggle UI component
-- `src/engine/GridManager.ts` - Language-aware letter generation
-- `src/types/game.types.ts` - Language type and letter weights
+### 1.3 Implementation Files
 
-### 1.3 Architecture Overview
+```
+src/
+├── db/
+│   ├── database.ts          # SQLite initialization
+│   ├── dictionaryDb.ts      # Dictionary operations
+│   ├── highscoreDb.ts       # Highscore operations
+│   └── platform.ts          # Platform detection
+├── stores/
+│   └── languageStore.ts     # Zustand language store
+├── services/
+│   └── dictionarySeeder.ts  # Dictionary data seeding
+├── dictonary/               # Word list data
+│   ├── eng/index.ts         # English words
+│   └── pl/index.ts          # Polish words
+└── types/
+    └── game.types.ts        # Language type, letter weights
+```
+
+### 1.4 Architecture Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                 DICTIONARY SYSTEM                            │
 │                                                              │
 │  ┌─────────────────────────────────────────────────────────┐│
-│  │                 Dictionary Manager                       ││
-│  │  - Language switching                                   ││
-│  │  - Hot-reload support                                   ││
-│  │  - Memory management                                    ││
+│  │                 Language Store (Zustand)                 ││
+│  │  - Current language (en | pl)                           ││
+│  │  - First run detection                                  ││
+│  │  - Persistence via AsyncStorage                         ││
 │  └─────────────────────────────────────────────────────────┘│
 │                          │                                   │
 │          ┌───────────────┼───────────────┐                  │
 │          ▼               ▼               ▼                  │
 │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐           │
-│  │    Trie     │ │  Profanity  │ │   Letter    │           │
-│  │  Dictionary │ │   Filter    │ │Distribution │           │
+│  │   SQLite    │ │  Dictionary │ │   Letter    │           │
+│  │  Database   │ │   Seeder    │ │Distribution │           │
 │  │             │ │             │ │             │           │
-│  │ - lookup()  │ │ - check()   │ │ - weights[] │           │
-│  │ - prefix()  │ │ - block()   │ │ - values[]  │           │
+│  │ - lookup()  │ │ - seed()    │ │ - weights[] │           │
+│  │ - count()   │ │ - loadWords│ │ - values[]  │           │
 │  │ - validate()│ │             │ │             │           │
 │  └─────────────┘ └─────────────┘ └─────────────┘           │
 └─────────────────────────────────────────────────────────────┘
@@ -64,106 +77,61 @@ The Dictionary System is a critical performance component responsible for word v
 
 ---
 
-## 2. Trie Data Structure
+## 2. SQLite Database Structure
 
-### 2.1 Design Specification
+### 2.1 Database Schema
 
-The Trie (prefix tree) provides O(m) lookup complexity where m is word length, optimal for dictionary operations.
+```sql
+-- Dictionary table for English
+CREATE TABLE IF NOT EXISTS dictionary_en (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  word TEXT NOT NULL UNIQUE,
+  length INTEGER NOT NULL
+);
 
-```csharp
-public class TrieNode
-{
-    public Dictionary<char, TrieNode> Children { get; }
-    public bool IsEndOfWord { get; set; }
-    public WordMetadata Metadata { get; set; }
+-- Dictionary table for Polish
+CREATE TABLE IF NOT EXISTS dictionary_pl (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  word TEXT NOT NULL UNIQUE,
+  length INTEGER NOT NULL
+);
 
-    // Memory optimization: use array for common letters
-    private TrieNode[] _fastChildren; // For letters A-Z, a-z, Polish chars
-}
-
-public class WordMetadata
-{
-    public int Frequency;      // Usage frequency in language
-    public string Category;    // Semantic category
-    public int ScrabbleValue;  // Letter point sum
-    public bool IsProfane;     // Profanity flag
-}
+-- Indexes for fast lookup
+CREATE INDEX IF NOT EXISTS idx_dict_en_word ON dictionary_en(word);
+CREATE INDEX IF NOT EXISTS idx_dict_pl_word ON dictionary_pl(word);
+CREATE INDEX IF NOT EXISTS idx_dict_en_length ON dictionary_en(length);
+CREATE INDEX IF NOT EXISTS idx_dict_pl_length ON dictionary_pl(length);
 ```
 
-### 2.2 Memory Optimization
+### 2.2 Database Operations
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│              MEMORY OPTIMIZATION STRATEGIES                  │
-│                                                              │
-│  1. Node Compression                                         │
-│     - Single-child paths collapsed                           │
-│     - ~30% memory reduction                                  │
-│                                                              │
-│  2. Character Indexing                                       │
-│     - Array for common chars (A-Z, Polish: Ą,Ć,Ę,Ł,Ń,Ó,Ś,Ź,Ż)│
-│     - Dictionary for rare chars                              │
-│     - ~20% faster lookup                                     │
-│                                                              │
-│  3. Lazy Loading                                             │
-│     - Core dictionary (common words) loaded first           │
-│     - Extended dictionary loaded async                       │
-│     - ~40% faster startup                                    │
-│                                                              │
-│  4. Pooling                                                  │
-│     - TrieNode pool for allocation                          │
-│     - Reduces GC pressure                                   │
-└─────────────────────────────────────────────────────────────┘
+```typescript
+// src/db/dictionaryDb.ts
+
+// Initialize dictionary for language
+export async function loadDictionary(language: Language): Promise<void>;
+
+// Check if word exists - O(log n) with index
+export function isValidWord(word: string): boolean;
+
+// Get total word count
+export function getWordCount(): number;
+
+// Internal: seed dictionary with word list
+async function seedDictionary(
+  db: SQLiteDatabase,
+  language: Language
+): Promise<void>;
 ```
 
-### 2.3 Implementation
+### 2.3 Performance Characteristics
 
-```csharp
-public class TrieDictionary : IDictionary
-{
-    private TrieNode _root;
-    private int _wordCount;
-    private readonly Language _language;
-
-    // O(m) lookup - m is word length
-    public bool Contains(string word)
-    {
-        TrieNode node = _root;
-        foreach (char c in word.ToUpper())
-        {
-            if (!node.TryGetChild(c, out node))
-                return false;
-        }
-        return node.IsEndOfWord;
-    }
-
-    // O(m) prefix check for word building hints
-    public bool HasPrefix(string prefix)
-    {
-        TrieNode node = _root;
-        foreach (char c in prefix.ToUpper())
-        {
-            if (!node.TryGetChild(c, out node))
-                return false;
-        }
-        return true;
-    }
-
-    // Find all words with given prefix
-    public IEnumerable<string> GetWordsWithPrefix(string prefix, int limit = 10)
-    {
-        // Navigate to prefix node
-        // DFS to collect words
-        // Yield results up to limit
-    }
-
-    // Batch validation for grid analysis
-    public Dictionary<string, bool> ValidateWords(IEnumerable<string> words)
-    {
-        return words.ToDictionary(w => w, w => Contains(w));
-    }
-}
-```
+| Operation | Complexity | Typical Time |
+|-----------|------------|--------------|
+| Word lookup | O(log n) | <5ms |
+| Dictionary load | O(n) | ~200ms |
+| Word count | O(1) | <1ms |
+| Index rebuild | O(n log n) | ~500ms |
 
 ---
 
@@ -171,14 +139,12 @@ public class TrieDictionary : IDictionary
 
 ### 3.1 Polish Dictionary
 
-| Aspect | Specification (Target) | v1.0 Implementation |
-|--------|------------------------|---------------------|
-| Word Count | ~200,000 | 300+ (MVP) |
-| Character Set | A-Z + Ą, Ć, Ę, Ł, Ń, Ó, Ś, Ź, Ż | A-Z (no diacritics) |
-| Storage | ~5MB compressed | In-memory array |
-| Location | External file | `src/data/dictionaries/polish.ts` |
-
-**Note:** v1.0 uses simplified Polish (no diacritics) for grid compatibility. Full diacritic support planned for v2.0.
+| Aspect | Specification |
+|--------|---------------|
+| Word Count | ~300 (MVP), expandable |
+| Character Set | A-Z (simplified, no diacritics) |
+| Storage | SQLite table `dictionary_pl` |
+| Data Source | `src/dictonary/pl/index.ts` |
 
 **Polish Letter Distribution (Gameplay Optimized):**
 
@@ -187,9 +153,8 @@ public class TrieDictionary : IDictionary
 | Very Common | A, I, O, E, N | 7-9% each |
 | Common | R, Z, S, W, C | 3-5% each |
 | Moderate | T, K, Y, D, P, M | 2-3% each |
-| Uncommon | L, Ł, U, J, B | 1-2% each |
-| Rare | G, H, Ą, Ę, Ó, Ś, Ż | 0.3-1% each |
-| Very Rare | Ć, Ń, Ź, F | 0.1-0.2% each |
+| Uncommon | L, U, J, B | 1-2% each |
+| Rare | G, H, F | 0.3-1% each |
 
 **Polish Letter Point Values:**
 
@@ -197,19 +162,17 @@ public class TrieDictionary : IDictionary
 |--------|---------|
 | 1 | A, E, I, O, N, R, S, W, Z |
 | 2 | C, D, K, L, M, P, T, Y |
-| 3 | B, G, H, J, Ł, U |
-| 5 | Ą, Ę, F, Ó, Ś, Ż |
-| 7 | Ć, Ń |
-| 9 | Ź |
+| 3 | B, G, H, J, U |
+| 5 | F |
 
 ### 3.2 English Dictionary
 
-| Aspect | Specification (Target) | v1.0 Implementation |
-|--------|------------------------|---------------------|
-| Word Count | ~170,000 | 300+ (MVP) |
-| Character Set | A-Z | A-Z |
-| Storage | ~4MB compressed | In-memory array |
-| Location | External file | `src/data/dictionaries/english.ts` |
+| Aspect | Specification |
+|--------|---------------|
+| Word Count | ~300 (MVP), expandable |
+| Character Set | A-Z |
+| Storage | SQLite table `dictionary_en` |
+| Data Source | `src/dictonary/eng/index.ts` |
 
 **English Letter Distribution:**
 
@@ -221,7 +184,7 @@ public class TrieDictionary : IDictionary
 | Uncommon | F, Y, W, K, V | 1-2% each |
 | Rare | X, Z, J, Q | 0.1-0.5% each |
 
-**English Letter Point Values:**
+**English Letter Point Values (Scrabble-style):**
 
 | Points | Letters |
 |--------|---------|
@@ -233,332 +196,249 @@ public class TrieDictionary : IDictionary
 | 8 | J, X |
 | 10 | Q, Z |
 
-### 3.3 Language Expansion (v2.0+)
+---
 
-| Language | Word Count | Priority | Status |
-|----------|------------|----------|--------|
-| German | ~300,000 | Phase 2 | Planned |
-| Spanish | ~150,000 | Phase 2 | Planned |
-| French | ~140,000 | Phase 2 | Planned |
-| Italian | ~120,000 | Phase 3 | Backlog |
-| Portuguese | ~120,000 | Phase 3 | Backlog |
+## 4. Dictionary Seeder Service
+
+### 4.1 Seeding Process
+
+```typescript
+// src/services/dictionarySeeder.ts
+
+export async function seedDictionary(
+  db: SQLiteDatabase,
+  language: Language
+): Promise<void> {
+  // 1. Check if already seeded
+  const count = getWordCount();
+  if (count > 0) return;
+
+  // 2. Load word list based on language
+  const words = language === 'en'
+    ? englishWords
+    : polishWords;
+
+  // 3. Batch insert for performance
+  await db.withTransactionAsync(async () => {
+    for (const word of words) {
+      await db.runAsync(
+        `INSERT OR IGNORE INTO dictionary_${language} (word, length) VALUES (?, ?)`,
+        [word.toUpperCase(), word.length]
+      );
+    }
+  });
+}
+```
+
+### 4.2 Word List Format
+
+```typescript
+// src/dictonary/eng/index.ts
+export const englishWords = [
+  'the', 'and', 'for', 'are', 'but', 'not', 'you', 'all',
+  'can', 'had', 'her', 'was', 'one', 'our', 'out', 'day',
+  // ... ~300 common words
+];
+
+// src/dictonary/pl/index.ts
+export const polishWords = [
+  'tak', 'nie', 'ale', 'czy', 'jak', 'sie', 'ona', 'ten',
+  'dom', 'pan', 'raz', 'nic', 'tam', 'oto', 'sam', 'moj',
+  // ... ~300 common words
+];
+```
 
 ---
 
-## 4. Dictionary File Format
+## 5. Language Store Integration
 
-### 4.1 Serialization Format
+### 5.1 Zustand Store
+
+```typescript
+// src/stores/languageStore.ts
+
+interface LanguageState {
+  language: Language;
+  isFirstRun: boolean;
+
+  setLanguage: (lang: Language) => Promise<void>;
+  completeFirstRun: () => Promise<void>;
+  loadLanguage: () => Promise<void>;
+}
+
+export const useLanguageStore = create<LanguageState>()(
+  persist(
+    (set, get) => ({
+      language: 'en',
+      isFirstRun: true,
+
+      setLanguage: async (lang) => {
+        set({ language: lang });
+        // Reload dictionary for new language
+        await loadDictionary(lang);
+      },
+
+      completeFirstRun: async () => {
+        set({ isFirstRun: false });
+      },
+
+      loadLanguage: async () => {
+        // Load persisted language on app start
+        await loadDictionary(get().language);
+      },
+    }),
+    {
+      name: 'language-storage',
+      storage: createJSONStorage(() => AsyncStorage),
+    }
+  )
+);
+```
+
+### 5.2 Language Switching Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│              DICTIONARY FILE FORMAT (.wgd)                   │
+│                 LANGUAGE SWITCH FLOW                         │
 │                                                              │
-│  Header (32 bytes)                                           │
-│  ├── Magic number: "WGRD" (4 bytes)                         │
-│  ├── Version: uint16 (2 bytes)                              │
-│  ├── Language code: char[2] (2 bytes)                       │
-│  ├── Word count: uint32 (4 bytes)                           │
-│  ├── Checksum: uint32 (4 bytes)                             │
-│  └── Reserved: 16 bytes                                      │
-│                                                              │
-│  Trie Data (variable)                                        │
-│  ├── Compressed node data                                    │
-│  ├── String pool (shared suffixes)                          │
-│  └── Metadata table                                          │
-│                                                              │
-│  Index (optional)                                            │
-│  └── First-letter offsets for fast loading                  │
+│  1. User selects new language (Settings or Onboarding)      │
+│                          │                                   │
+│                          ▼                                   │
+│  2. languageStore.setLanguage(newLang)                      │
+│     - Updates Zustand state                                 │
+│     - Persists to AsyncStorage                              │
+│                          │                                   │
+│                          ▼                                   │
+│  3. loadDictionary(newLang)                                 │
+│     - Loads words from dictionary_[lang] table              │
+│     - Updates in-memory word set                            │
+│                          │                                   │
+│                          ▼                                   │
+│  4. Game state resets (if in game)                          │
+│     - New grid generated with language-specific weights     │
+│     - Score reset to 0                                      │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 4.2 Compression Strategy
+---
 
-| Technique | Reduction | Impact |
-|-----------|-----------|--------|
-| LZMA2 Compression | 60-70% | Slower load |
-| String Deduplication | 15-20% | None |
-| Node Pooling | 10-15% | Faster load |
-| **Total** | **~75%** | Acceptable |
+## 6. Word Validation API
 
-### 4.3 Loading Strategy
+### 6.1 Interface
 
-```csharp
-public async Task<IDictionary> LoadDictionaryAsync(Language lang)
-{
-    // 1. Load header and validate
-    var header = await LoadHeaderAsync(lang);
-    ValidateChecksum(header);
+```typescript
+// src/db/dictionaryDb.ts
 
-    // 2. Load core dictionary (most common 50K words)
-    var coreTrie = await LoadCoreDictionaryAsync(lang);
+/**
+ * Check if a word exists in the current language dictionary
+ * @param word - The word to validate (case-insensitive)
+ * @returns true if word exists, false otherwise
+ */
+export function isValidWord(word: string): boolean;
 
-    // 3. Background load extended dictionary
-    _ = Task.Run(() => LoadExtendedDictionaryAsync(lang, coreTrie));
+/**
+ * Get the number of words in the current dictionary
+ * @returns Total word count
+ */
+export function getWordCount(): number;
 
-    return new TrieDictionary(coreTrie, lang);
+/**
+ * Load dictionary for a specific language
+ * Seeds data if not already present
+ * @param language - 'en' or 'pl'
+ */
+export async function loadDictionary(language: Language): Promise<void>;
+```
+
+### 6.2 Usage in Game Engine
+
+```typescript
+// src/engine/WordValidator.ts or GridManager.ts
+
+// During word submission
+const word = selectedLetters.map(pos => grid[pos.row][pos.col].letter).join('');
+const isValid = isValidWord(word.toUpperCase());
+
+if (isValid) {
+  // Calculate score
+  // Clear matched letters
+  // Apply cascade
+} else {
+  // Show invalid word feedback
+  // Add strike (if applicable)
 }
 ```
 
 ---
 
-## 5. Profanity Filter
+## 7. Future Expansion (v2.0+)
 
-### 5.1 Filter Design
+### 7.1 Language Expansion
 
-```csharp
-public class ProfanityFilter : IProfanityFilter
-{
-    private HashSet<string> _blockedWords;
-    private Dictionary<string, string> _substitutionPatterns;
+| Language | Word Count Target | Priority |
+|----------|-------------------|----------|
+| Polish (expanded) | 10,000+ | Phase 2 |
+| English (expanded) | 10,000+ | Phase 2 |
+| German | ~50,000 | Phase 3 |
+| Spanish | ~30,000 | Phase 3 |
 
-    public bool IsProfane(string word)
-    {
-        // Direct match
-        if (_blockedWords.Contains(word.ToUpper()))
-            return true;
+### 7.2 Planned Features
 
-        // Substitution detection (e.g., "sh1t" → "shit")
-        string normalized = NormalizeSubstitutions(word);
-        return _blockedWords.Contains(normalized.ToUpper());
-    }
-
-    public string NormalizeSubstitutions(string word)
-    {
-        // 1 → i, 0 → o, @ → a, $ → s, etc.
-        foreach (var (pattern, replacement) in _substitutionPatterns)
-            word = word.Replace(pattern, replacement);
-        return word;
-    }
-}
-```
-
-### 5.2 Filter Categories
-
-| Category | Count | Action |
-|----------|-------|--------|
-| Blocked | ~500 | Reject word |
-| Flagged | ~200 | Mark for review |
-| Cultural | ~100 | Language-specific |
-
-### 5.3 Update Mechanism
-
-| Aspect | Implementation |
-|--------|----------------|
-| Initial List | Bundled with app |
-| Updates | Remote config |
-| User Reports | Review queue |
-| Regional | Locale-specific lists |
+- **Full diacritic support** for Polish (Ą, Ć, Ę, Ł, Ń, Ó, Ś, Ź, Ż)
+- **Word categories** (common, advanced, rare)
+- **Word definitions** for learning mode
+- **Profanity filter** integration
+- **OTA dictionary updates** via remote config
 
 ---
 
-## 6. Grid Word Detection
+## 8. Testing Strategy
 
-### 6.1 Detection Algorithm
-
-```csharp
-public class WordDetector
-{
-    private readonly IDictionary _dictionary;
-
-    public List<WordMatch> FindAllWords(char[,] grid)
-    {
-        var matches = new List<WordMatch>();
-        int rows = grid.GetLength(0);
-        int cols = grid.GetLength(1);
-
-        // Horizontal scan (left to right)
-        for (int row = 0; row < rows; row++)
-        {
-            matches.AddRange(FindWordsInLine(GetRow(grid, row), row, 0, Direction.Horizontal));
-        }
-
-        // Vertical scan (top to bottom)
-        for (int col = 0; col < cols; col++)
-        {
-            matches.AddRange(FindWordsInLine(GetColumn(grid, col), 0, col, Direction.Vertical));
-        }
-
-        // Remove subwords (CAT in CATS)
-        return FilterSubwords(matches);
-    }
-
-    private List<WordMatch> FindWordsInLine(char[] line, int startRow, int startCol, Direction dir)
-    {
-        var matches = new List<WordMatch>();
-        int minLength = _settings.MinWordLength; // 3 or 4
-
-        // Sliding window approach
-        for (int start = 0; start < line.Length - minLength + 1; start++)
-        {
-            for (int end = start + minLength; end <= line.Length; end++)
-            {
-                string word = new string(line[start..end]);
-                if (_dictionary.Contains(word) && !_profanityFilter.IsProfane(word))
-                {
-                    matches.Add(new WordMatch
-                    {
-                        Word = word,
-                        StartPosition = (startRow + (dir == Direction.Vertical ? start : 0),
-                                        startCol + (dir == Direction.Horizontal ? start : 0)),
-                        Direction = dir,
-                        Length = word.Length
-                    });
-                }
-            }
-        }
-
-        return matches;
-    }
-}
-```
-
-### 6.2 Performance Optimizations
-
-| Optimization | Description | Impact |
-|--------------|-------------|--------|
-| Prefix Pruning | Skip impossible prefixes | 40% faster |
-| Parallel Scan | Scan rows/cols concurrently | 30% faster |
-| Result Caching | Cache between frames | 50% faster on repeat |
-| Early Termination | Stop at max word length | 10% faster |
-
----
-
-## 7. OTA Dictionary Updates
-
-### 7.1 Update Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│              OTA DICTIONARY UPDATE SYSTEM                    │
-│                                                              │
-│  Cloud Storage                                               │
-│  ├── /dictionaries/v2/                                      │
-│  │   ├── pl.wgd                                             │
-│  │   ├── en.wgd                                             │
-│  │   └── manifest.json                                      │
-│                                                              │
-│  Update Flow                                                 │
-│  1. Check manifest version on app launch                     │
-│  2. Compare with local version                               │
-│  3. Download delta if available                              │
-│  4. Validate checksum                                        │
-│  5. Atomic replace                                           │
-│  6. Hot-reload if game not in progress                       │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### 7.2 Update Manifest
-
-```json
-{
-  "version": "2.1.0",
-  "timestamp": "2025-01-15T00:00:00Z",
-  "dictionaries": {
-    "pl": {
-      "version": "2.1.0",
-      "wordCount": 201500,
-      "size": 5242880,
-      "checksum": "sha256:abc123...",
-      "deltaFrom": "2.0.0",
-      "deltaSize": 102400
-    },
-    "en": {
-      "version": "2.1.0",
-      "wordCount": 171200,
-      "size": 4194304,
-      "checksum": "sha256:def456...",
-      "deltaFrom": "2.0.0",
-      "deltaSize": 81920
-    }
-  }
-}
-```
-
----
-
-## 8. API Specification
-
-### 8.1 Dictionary Interface
-
-```csharp
-public interface IDictionary
-{
-    // Core operations
-    bool Contains(string word);
-    bool HasPrefix(string prefix);
-    WordMetadata GetMetadata(string word);
-
-    // Batch operations
-    Dictionary<string, bool> ValidateWords(IEnumerable<string> words);
-
-    // Discovery
-    IEnumerable<string> GetWordsWithPrefix(string prefix, int limit = 10);
-    int WordCount { get; }
-    Language Language { get; }
-
-    // Lifecycle
-    Task LoadAsync();
-    void Unload();
-    bool IsLoaded { get; }
-}
-
-public interface IProfanityFilter
-{
-    bool IsProfane(string word);
-    Task UpdateFilterAsync();
-}
-
-public interface ILetterDistribution
-{
-    char GetRandomLetter();
-    char[] GetRandomLetters(int count);
-    int GetPointValue(char letter);
-    float GetFrequency(char letter);
-}
-```
-
-### 8.2 Events
-
-```csharp
-public interface IDictionaryEvents
-{
-    event Action<Language> OnDictionaryLoaded;
-    event Action<Language, string> OnDictionaryLoadError;
-    event Action<Language> OnDictionaryUpdated;
-}
-```
-
----
-
-## 9. Testing Strategy
-
-### 9.1 Unit Tests
+### 8.1 Unit Tests
 
 | Test Area | Coverage Target |
 |-----------|-----------------|
-| Trie Operations | 100% |
-| Word Validation | 100% |
-| Profanity Filter | 100% |
-| Letter Distribution | 95% |
+| Word lookup | 100% |
+| Dictionary loading | 100% |
+| Language switching | 100% |
+| Edge cases (empty, special chars) | 95% |
 
-### 9.2 Performance Tests
+### 8.2 Performance Tests
 
 | Test | Target | Method |
 |------|--------|--------|
-| Lookup Speed | <50ms | Benchmark 10K words |
-| Load Time | <500ms | Cold load |
-| Memory Usage | <15MB | Memory profiler |
-| Grid Detection | <100ms | 6×6 grid scan |
+| Lookup Speed | <50ms | Benchmark 1000 lookups |
+| Load Time | <500ms | Cold load measurement |
+| Memory Usage | <5MB | Memory profiler |
 
-### 9.3 Test Data
+### 8.3 Test Cases
 
-| Dataset | Purpose | Size |
-|---------|---------|------|
-| Valid Words | Positive tests | 10,000 |
-| Invalid Words | Negative tests | 5,000 |
-| Profane Words | Filter tests | 500 |
-| Edge Cases | Boundary tests | 200 |
+```typescript
+// Example test cases
+describe('Dictionary', () => {
+  it('validates known English words', () => {
+    expect(isValidWord('THE')).toBe(true);
+    expect(isValidWord('AND')).toBe(true);
+  });
+
+  it('rejects invalid words', () => {
+    expect(isValidWord('XYZ')).toBe(false);
+    expect(isValidWord('ASDF')).toBe(false);
+  });
+
+  it('is case-insensitive', () => {
+    expect(isValidWord('the')).toBe(true);
+    expect(isValidWord('The')).toBe(true);
+    expect(isValidWord('THE')).toBe(true);
+  });
+
+  it('handles empty strings', () => {
+    expect(isValidWord('')).toBe(false);
+  });
+});
+```
 
 ---
 
-*Generated by BMAD PRD Workflow v1.0*
+*Updated for LetterCrush SQLite dictionary implementation*
+*Generated by BMAD TSD Workflow v2.0*

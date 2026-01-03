@@ -2,15 +2,15 @@
 stepsCompleted: ["overview", "features", "requirements"]
 inputDocuments: ["docs/wordgrid-gdd.md"]
 workflowType: 'prd'
-project_name: 'WordGrid'
+project_name: 'LetterCrush'
 ---
 
-# Product Requirements Document - WordGrid
+# Product Requirements Document - LetterCrush
 
-**Author:** BMAD Product Manager (John)
-**Date:** 2025-12-30
-**Version:** 1.0
-**Status:** Draft
+**Author:** BMAD Product Manager
+**Date:** 2026-01-03
+**Version:** 1.1
+**Status:** Active Development
 
 ---
 
@@ -18,11 +18,11 @@ project_name: 'WordGrid'
 
 ### 1.1 Product Vision
 
-WordGrid is an innovative mobile word puzzle game that combines the addictive match-3 mechanics with word-building gameplay. Players swap adjacent letters on a grid to form valid words, creating a unique hybrid experience that appeals to both casual puzzle fans and word game enthusiasts.
+LetterCrush is an innovative mobile word puzzle game that combines the addictive match-3 mechanics with word-building gameplay. Players swap adjacent letters on a grid to form valid words, creating a unique hybrid experience that appeals to both casual puzzle fans and word game enthusiasts.
 
 ### 1.2 Elevator Pitch
 
-WordGrid combines the satisfying cascade mechanics of Candy Crush with the intellectual challenge of Scrabble. Players swap letters on a 6×6 grid to form words - the longer the word and better the combination, the higher the score. It's the first true hybrid of match-3 and word games.
+LetterCrush combines the satisfying cascade mechanics of Candy Crush with the intellectual challenge of Scrabble. Players swap letters on a 6×6 grid to form words - the longer the word and better the combination, the higher the score. It's the first true hybrid of match-3 and word games.
 
 ### 1.3 Unique Selling Points (USPs)
 
@@ -30,20 +30,20 @@ WordGrid combines the satisfying cascade mechanics of Candy Crush with the intel
 |-----|-------------|----------------------|
 | **Hybrid Mechanics** | Match-3 + Word Game in one package | Creates new genre hybrid |
 | **Emergent Gameplay** | Players discover words they didn't plan | Surprise & delight moments |
-| **Dual Audience** | Educational for kids, challenging for adults | Broader market appeal |
-| **Proven Monetization** | Battle Pass + IAP + Ads hybrid model | Sustainable revenue |
-| **Social Virality** | Daily challenges with natural sharing | Organic growth engine |
+| **Dual Language** | Polish and English dictionaries | Bilingual market reach |
+| **Simple Monetization** | Interstitial ads on replay | Non-intrusive UX |
+| **Offline First** | Full gameplay without internet | Reliable experience |
 
 ### 1.4 Target Audience
 
-**Primary:** Casual to mid-core mobile gamers aged 25-45
+**Primary:** Casual mobile gamers aged 25-45
 - Word game enthusiasts (Wordscapes, Word Cookies players)
 - Match-3 fans seeking cognitive challenge (Candy Crush graduates)
-- Education-minded parents for child engagement
+- Polish and English speaking markets
 
-**Secondary:** Hardcore puzzle fans aged 18-35
-- Competitive players seeking PvP word battles
-- Achievement hunters and completionists
+**Secondary:** Casual puzzle fans aged 18-35
+- Quick session players (commuters, break-time gaming)
+- Achievement seekers
 
 ### 1.5 Success Criteria
 
@@ -51,67 +51,154 @@ WordGrid combines the satisfying cascade mechanics of Candy Crush with the intel
 |--------|--------|-------------------|
 | D1 Retention | **35%+** | 26-28% (top 25%) |
 | D7 Retention | **15%+** | ~8% (median) |
-| Avg Session Length | **8-10 min** | 5-6 min (median) |
-| ARPDAU | **$0.08+** | $0.04-0.06 (puzzle) |
-| Tutorial Completion | **85%+** | 70% (average) |
+| Avg Session Length | **5-8 min** | 5-6 min (median) |
 | Crash Rate | **<0.5%** | <2% (acceptable) |
+| Tutorial Completion | **85%+** | 70% (average) |
 
 ---
 
 ## 2. Product Scope
 
-### 2.1 In Scope (v1.0)
+### 2.1 In Scope (v1.0) - Current Implementation
 
-- Core grid-based word gameplay (6×6 grid)
-- Classic Mode (timed gameplay)
-- Campaign/Puzzle Mode (500+ levels)
-- Daily Challenge system
-- Player progression (XP, levels)
-- Power-ups system (5 active power-ups)
-- Personal dictionary collection
-- Basic achievement system
-- IAP store (coins, gems)
-- Rewarded video ads
-- Polish and English language support
-- iOS and Android platforms
+- ✅ Core grid-based word gameplay (6×6 grid)
+- ✅ Timer Mode (countdown gameplay with 3 strikes)
+- ✅ Player highscore tracking (SQLite persistence)
+- ✅ Polish and English dictionary support
+- ✅ Language switching (settings + onboarding)
+- ✅ Scoring system (Scrabble-style letter values + combos)
+- ✅ Cascade mechanics (gravity + refill)
+- ✅ Sound and haptic feedback settings
+- ✅ Tutorial/How to Play screen
+- ✅ Statistics and leaderboard
+- ✅ Interstitial ads on game replay
+- ✅ iOS and Android platforms (via Expo)
 
 ### 2.2 Out of Scope (v1.0)
 
-- PvP Versus Mode (Phase 2)
-- Word Hunt/Wykreślanka Mode (Phase 2)
-- Zen Mode (Phase 2)
-- Battle Pass system (Phase 2)
-- Subscription model (Phase 2)
+- Campaign/Puzzle Mode with levels
+- Power-ups system
+- Daily Challenges
+- PvP Versus Mode
+- Cloud save/sync
+- Battle Pass system
+- Subscription model
 - Additional languages (German, Spanish, French)
 - Tablet-optimized layouts
-- Apple Watch/Wear OS companion apps
 
-### 2.3 Dependencies
+### 2.3 Technology Stack
 
-| Dependency | Type | Risk Level |
-|------------|------|------------|
-| Dictionary API/Dataset | Content | Medium |
-| Firebase/Amplitude | Analytics | Low |
-| AdMob/ironSource | Monetization | Low |
-| Cloud Save Backend | Infrastructure | Medium |
-| App Store Approvals | Distribution | Low |
-
----
-
-## 3. Stakeholders
-
-| Role | Responsibilities | RACI |
-|------|-----------------|------|
-| Product Manager | Requirements, priorities, roadmap | A |
-| Game Designer | Mechanics, balance, progression | R |
-| Tech Lead | Architecture, technical decisions | R |
-| QA Lead | Quality, testing strategy | R |
-| Marketing | UA, ASO, positioning | C |
-| Finance | Budget, revenue forecasting | I |
+| Layer | Technology | Version |
+|-------|------------|---------|
+| Framework | React Native | 0.81.5 |
+| Platform | Expo | 54.0.30 |
+| Language | TypeScript | 5.3 |
+| State | Zustand | 5.0 |
+| Database | expo-sqlite | 16.x |
+| Ads | react-native-google-mobile-ads | Latest |
+| Animation | react-native-reanimated | 3.x |
 
 ---
 
-## 4. Document Structure
+## 3. Core Features
+
+### 3.1 Gameplay
+
+- **6×6 Letter Grid**: Dynamic grid with language-specific letter distribution
+- **Word Formation**: Horizontal and vertical word detection (3+ letters)
+- **Swap Mechanics**: Adjacent tile swapping via tap or swipe gestures
+- **Cascade System**: Matched letters removed, new letters fall from above
+- **Combo System**: Sequential matches multiply score
+
+### 3.2 Game Modes
+
+| Mode | Description | Status |
+|------|-------------|--------|
+| Timer Mode | 2-minute countdown with 3 strikes for invalid words | ✅ Implemented |
+| Zen Mode | Relaxed gameplay without timer | 📋 Planned |
+| Campaign | Level-based progression | 📋 Planned |
+
+### 3.3 Progression & Statistics
+
+- **Highscore Tracking**: Top 10 scores with date
+- **Game Statistics**: Best score, games played, average score
+- **Per-Game Stats**: Words found, longest word, best combo
+
+---
+
+## 4. Screens & Navigation
+
+### 4.1 Screen Map
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    APP NAVIGATION                            │
+│                                                              │
+│  ┌──────────────────┐                                       │
+│  │ Language Select  │ ← First run only                      │
+│  └────────┬─────────┘                                       │
+│           │                                                  │
+│           ▼                                                  │
+│  ┌──────────────────┐                                       │
+│  │      Home        │ ← Main menu                           │
+│  │   (index.tsx)    │                                       │
+│  └────────┬─────────┘                                       │
+│           │                                                  │
+│   ┌───────┼───────┬───────┬───────┐                        │
+│   │       │       │       │       │                        │
+│   ▼       ▼       ▼       ▼       ▼                        │
+│ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐                   │
+│ │Game │ │Stats│ │Tutor│ │Setti│ │Lang │                   │
+│ │     │ │     │ │ial  │ │ngs  │ │Sel. │                   │
+│ └──┬──┘ └─────┘ └─────┘ └─────┘ └─────┘                   │
+│    │                                                        │
+│    ▼                                                        │
+│ ┌──────────────────┐                                       │
+│ │   Game Screen    │                                       │
+│ │   - Grid         │                                       │
+│ │   - Score/Timer  │                                       │
+│ │   - Word Builder │                                       │
+│ └────────┬─────────┘                                       │
+│          │                                                  │
+│    ┌─────┴─────┐                                           │
+│    ▼           ▼                                           │
+│ ┌──────┐  ┌──────────┐                                     │
+│ │Pause │  │Game Over │                                     │
+│ │Modal │  │Modal     │                                     │
+│ └──────┘  └──────────┘                                     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 4.2 Screen Details
+
+| Screen | File | Purpose |
+|--------|------|---------|
+| Home | `app/index.tsx` | Main menu, navigation hub |
+| Game | `app/game.tsx` | Core gameplay |
+| Settings | `app/settings.tsx` | Language, sound, data management |
+| Stats | `app/stats.tsx` | Leaderboard, statistics |
+| Tutorial | `app/tutorial.tsx` | How to play guide |
+| Language Select | `app/language-select.tsx` | First-run onboarding |
+
+---
+
+## 5. Monetization
+
+### 5.1 Current Model (v1.0)
+
+| Type | Implementation | Placement |
+|------|----------------|-----------|
+| Interstitial Ads | Google AdMob | After "Play Again" button |
+
+### 5.2 Future Monetization (v2.0+)
+
+- Rewarded video ads for power-ups
+- Remove ads IAP
+- Cosmetic purchases (themes)
+
+---
+
+## 6. Document Structure
 
 This PRD is organized into sharded documents for maintainability:
 
@@ -126,4 +213,5 @@ This PRD is organized into sharded documents for maintainability:
 
 ---
 
-*Generated by BMAD PRD Workflow v1.0*
+*Updated for LetterCrush React Native + Expo implementation*
+*Generated by BMAD PRD Workflow v2.0*
