@@ -1,4 +1,4 @@
-# WordGrid PRD - Game Modes
+# LetterCrush PRD - Game Modes
 
 **Parent Document:** [PRD Overview](./overview.md)
 
@@ -6,284 +6,183 @@
 
 ## 1. Mode Overview
 
-| Mode | Status | Target Player | Session Length | Monetization Focus |
-|------|--------|---------------|----------------|-------------------|
-| Classic | v1.0 | Casual | 2-5 min | Ads, power-ups |
-| Campaign/Puzzle | v1.0 | All | 3-10 min | IAP, power-ups |
-| Daily Challenge | v1.0 | Engaged | 5-10 min | Retention, IAP |
-| Word Hunt | v2.0 | Relaxed | 10-20 min | Premium unlock |
-| Versus (PvP) | v2.0 | Competitive | 3-5 min | Battle Pass |
-| Zen | v2.0 | Relaxed | Unlimited | Premium unlock |
+### 1.1 Implementation Status (v1.0)
+
+| Mode | Status | Target Player | Session Length | Monetization |
+|------|--------|---------------|----------------|--------------|
+| Timer Mode | ✅ Implemented | Casual | 2 min | Interstitial ads |
+| Campaign/Puzzle | 📋 v2.0+ | All | 3-10 min | TBD |
+| Daily Challenge | 📋 v2.0+ | Engaged | 5-10 min | TBD |
+| Word Hunt | 📋 v2.0+ | Relaxed | 10-20 min | TBD |
+| Versus (PvP) | 📋 v2.0+ | Competitive | 3-5 min | TBD |
+| Zen | 📋 v2.0+ | Relaxed | Unlimited | TBD |
 
 ---
 
-## 2. Classic Mode
+## 2. Timer Mode (v1.0 - Implemented)
 
 ### 2.1 Overview
 
-The fundamental gameplay mode, optimized for quick casual sessions.
+The core gameplay mode, optimized for quick casual sessions with tap-to-select word building.
 
 | Parameter | Value |
 |-----------|-------|
-| **Time Limit** | 2 minutes |
+| **Time Limit** | 120 seconds (2 minutes) |
 | **Objective** | Maximize score |
 | **Grid Size** | 6×6 (fixed) |
-| **Lives** | None (time-limited) |
+| **Minimum Word Length** | 3 letters |
+| **Strike System** | 3 strikes (invalid words) |
+| **Languages** | English, Polish |
 
 ### 2.2 Game Flow
 
 ```
 START → 2:00 Timer Begins
          ↓
-    Find Words → Score Points
+    TAP LETTERS → Build Word (any order)
          ↓
-    Timer Expires
+    SUBMIT WORD
          ↓
-    GAME OVER → Show Score + Leaderboard Position
+    ├── Valid? → Score + Clear + Cascade
+    │              ↓
+    │           Refill grid
+    │              ↓
+    │           Continue
+    │
+    └── Invalid? → Strike added
+                     ↓
+                  3 Strikes? → GAME OVER
          ↓
-    Option: Watch Ad (+30 sec) OR Replay OR Exit
+    Timer Expires → GAME OVER
+         ↓
+    Show Score + Highscore
+         ↓
+    [Interstitial Ad] → Play Again OR Home
 ```
 
-### 2.3 Retention Hooks
+### 2.3 Core Mechanics
 
-- **Daily Highscore:** Beat your best score today
-- **Weekly Leaderboards:** Compete with friends and global players
-- **Personal Best Notification:** Celebrate new records
+**Tap-to-Select System**:
+- Tap any letter on the grid to add to word
+- Tap again to deselect
+- Letters can be selected in ANY order (not adjacent-only)
+- Selection order shows as numbered badges (1, 2, 3...)
+- Current word displays in WordBuilder component
 
-### 2.4 Functional Requirements
+**Scoring**:
+- Base letter values (language-specific)
+- Length bonus (longer words = more points)
+- Combo multiplier (cascades)
 
-| ID | Requirement | Priority |
-|----|-------------|----------|
-| FR-CM-01 | Timer shall count down from 2:00 with second precision | P0 |
-| FR-CM-02 | Game shall end when timer reaches 0:00 | P0 |
-| FR-CM-03 | Continue option shall add +30 seconds for rewarded ad | P1 |
-| FR-CM-04 | Leaderboard shall update within 5 seconds of game end | P1 |
+**Strikes**:
+- Invalid word submission = 1 strike
+- 3 strikes = Game Over
+- Visual feedback with shake animation
 
----
+### 2.4 Timer Behavior
 
-## 3. Campaign Mode (Puzzle Mode)
+| Time Remaining | Visual State | Audio |
+|----------------|--------------|-------|
+| >30s | Normal (white) | None |
+| 30s-10s | Warning (yellow) | None |
+| <10s | Critical (red, pulse) | Optional tick |
+| 0s | Game Over | End sound |
 
-### 3.1 Overview
+### 2.5 Implementation Files
 
-The primary content driver with progression through themed regions.
+```
+app/
+├── game.tsx              # Main game screen
 
-| Parameter | Value |
-|-----------|-------|
-| **Total Levels** | 500+ (expandable) |
-| **Structure** | World map with themed regions |
-| **Level Objectives** | Variable (see below) |
-| **Difficulty** | Peak & Valley curve |
+src/
+├── stores/
+│   └── gameStore.ts      # Timer state, strikes, phase
+├── hooks/
+│   ├── useTimer.ts       # Countdown logic
+│   └── useGame.ts        # Game orchestration
+├── components/
+│   ├── Grid/             # Letter grid
+│   └── WordBuilder/      # Current word display
+└── engine/
+    ├── ScoreCalculator.ts
+    └── WordValidator.ts
+```
 
-### 3.2 Level Objective Types
+### 2.6 Functional Requirements
 
-| Objective Type | Description | Example |
-|----------------|-------------|---------|
-| **Score Target** | Reach X points | Score 5,000 points |
-| **Word Count** | Find X words | Find 15 words |
-| **Specific Length** | Find X words of Y letters | Find 5 five-letter words |
-| **Clear Tiles** | Remove special tiles | Clear all frozen tiles |
-| **Time Trial** | Complete in X seconds | Finish in 60 seconds |
-| **Limited Moves** | Complete in X moves | Use only 20 swaps |
-
-### 3.3 Region Structure
-
-| Levels | Region | Theme | Unique Mechanic |
-|--------|--------|-------|-----------------|
-| 1-35 | Tutorial Island | Tropical | Basic tutorials |
-| 36-80 | Frozen Fjords | Arctic | Frozen letters (ice blocks) |
-| 81-130 | Desert Dunes | Egyptian | Sand-covered letters |
-| 131-200 | Jungle Ruins | Mayan | Vine blockades |
-| 201-270 | Volcanic Peaks | Volcanic | Lava tiles (timed) |
-| 271-350 | Crystal Caves | Underground | Mirror letters |
-| 351-420 | Sky Kingdom | Clouds | Floating grid |
-| 421-500 | Shadow Realm | Dark | Hidden letters |
-
-### 3.4 Star Rating System
-
-| Stars | Requirement |
-|-------|-------------|
-| ⭐ | Complete level objective |
-| ⭐⭐ | Complete + score bonus threshold |
-| ⭐⭐⭐ | Complete + max score bonus |
-
-### 3.5 Functional Requirements
-
-| ID | Requirement | Priority |
-|----|-------------|----------|
-| FR-CP-01 | System shall save progress after each completed level | P0 |
-| FR-CP-02 | Region unlock shall require X stars from previous region | P0 |
-| FR-CP-03 | Level shall be replayable for better star rating | P1 |
-| FR-CP-04 | System shall display objective clearly before level start | P0 |
+| ID | Requirement | Status |
+|----|-------------|--------|
+| FR-TM-01 | Timer shall count down from 2:00 with second precision | ✅ |
+| FR-TM-02 | Game shall end when timer reaches 0:00 | ✅ |
+| FR-TM-03 | Invalid word shall add strike (max 3) | ✅ |
+| FR-TM-04 | 3 strikes shall end game immediately | ✅ |
+| FR-TM-05 | Score shall persist to local highscore database | ✅ |
+| FR-TM-06 | Interstitial ad shall show on "Play Again" | ✅ |
 
 ---
 
-## 4. Daily Challenge
+## 3. Future Game Modes (v2.0+)
 
-### 4.1 Overview
+The following modes are planned for future releases:
 
-Critical for D7+ retention with streak mechanics.
+### 3.1 Campaign Mode (Puzzle Mode)
 
-| Parameter | Value |
-|-----------|-------|
+| Parameter | Planned Value |
+|-----------|---------------|
+| **Total Levels** | 100+ |
+| **Structure** | Themed regions with objectives |
+| **Objectives** | Score targets, word counts, specific lengths |
+| **Star Rating** | 1-3 stars based on performance |
+
+### 3.2 Daily Challenge
+
+| Parameter | Planned Value |
+|-----------|---------------|
 | **Reset Time** | 00:00 UTC daily |
 | **Structure** | 3 levels of increasing difficulty |
-| **Rewards** | Coins, gems, exclusive items |
-| **Streak Bonus** | Escalating rewards |
+| **Rewards** | Streak bonuses |
+| **Streak Tracking** | Local persistence |
 
-### 4.2 Challenge Structure
+### 3.3 Zen Mode
 
-| Stage | Difficulty | Reward (Base) |
-|-------|------------|---------------|
-| Stage 1 | Easy | 100 coins |
-| Stage 2 | Medium | 150 coins + 5 gems |
-| Stage 3 | Hard | 250 coins + 10 gems + power-up |
-
-### 4.3 Streak Rewards
-
-| Streak Days | Bonus Reward |
-|-------------|--------------|
-| 3 days | +50% coins |
-| 7 days | +100% coins + rare power-up |
-| 14 days | Exclusive avatar frame |
-| 30 days | Exclusive theme unlock |
-| 100 days | Legendary badge |
-| 365 days | "Wordmaster" title + exclusive rewards |
-
-### 4.4 Functional Requirements
-
-| ID | Requirement | Priority |
-|----|-------------|----------|
-| FR-DC-01 | Challenge shall reset at 00:00 UTC | P0 |
-| FR-DC-02 | Streak counter shall increment on daily completion | P0 |
-| FR-DC-03 | Streak shall break if day is missed (grace period: 1 day with ad) | P1 |
-| FR-DC-04 | Push notification shall remind 2 hours before daily reset | P2 |
-| FR-DC-05 | Challenges shall be cached for offline play (24hr validity) | P1 |
-
----
-
-## 5. Word Hunt Mode (v2.0)
-
-### 5.1 Overview
-
-Alternative relaxed mode based on classic word search puzzles.
-
-| Parameter | Value |
-|-----------|-------|
-| **Grid Size** | 8×8 or 10×10 |
-| **Objective** | Find all hidden words from list |
-| **Time Limit** | None (relaxed) |
-| **Word Type** | Pre-defined, not emergent |
-
-### 5.2 Content Packs
-
-| Pack Theme | Word Count | Example Words |
-|------------|------------|---------------|
-| Animals | 15-20 | Lion, Tiger, Elephant |
-| Countries | 20-25 | France, Japan, Brazil |
-| Professions | 15-20 | Doctor, Teacher, Pilot |
-| Food & Drink | 20-25 | Pizza, Coffee, Apple |
-| Sports | 15-20 | Football, Tennis, Golf |
-
-### 5.3 Functional Requirements
-
-| ID | Requirement | Priority |
-|----|-------------|----------|
-| FR-WH-01 | System shall highlight found words in list | P0 |
-| FR-WH-02 | Words may be hidden in any direction (8 directions) | P1 |
-| FR-WH-03 | Hint shall reveal first letter of random unfound word | P1 |
-
----
-
-## 6. Versus Mode (PvP) (v2.0)
-
-### 6.1 Overview
-
-Competitive endgame content for hardcore players.
-
-| Parameter | Value |
-|-----------|-------|
-| **Format** | Async or real-time |
-| **Matchmaking** | ELO-based rating |
-| **Grid** | Same for both players |
-| **Objective** | Higher score wins |
-
-### 6.2 Match Structure
-
-```
-MATCHMAKING → Same Grid Generated
-                  ↓
-     Player A plays ← → Player B plays
-                  ↓
-         2 minute time limit each
-                  ↓
-         Higher score wins
-                  ↓
-     ELO adjustment + Rewards
-```
-
-### 6.3 League System
-
-| League | ELO Range | Season Reward |
-|--------|-----------|---------------|
-| Bronze | 0-999 | 100 gems |
-| Silver | 1000-1499 | 250 gems + frame |
-| Gold | 1500-1999 | 500 gems + theme |
-| Platinum | 2000-2499 | 1000 gems + avatar |
-| Diamond | 2500+ | 2000 gems + exclusive badge |
-
-### 6.4 Functional Requirements
-
-| ID | Requirement | Priority |
-|----|-------------|----------|
-| FR-PVP-01 | Both players shall receive identical grid | P0 |
-| FR-PVP-02 | ELO shall update within 30 seconds of match end | P0 |
-| FR-PVP-03 | Real-time mode shall require stable connection | P1 |
-| FR-PVP-04 | Async match shall allow 24-hour response window | P1 |
-
----
-
-## 7. Zen Mode (v2.0)
-
-### 7.1 Overview
-
-Premium relaxation mode with no pressure.
-
-| Parameter | Value |
-|-----------|-------|
+| Parameter | Planned Value |
+|-----------|---------------|
 | **Time Limit** | None |
 | **Objective** | Relaxation, word exploration |
-| **Monetization** | Premium unlock ($2.99) |
-| **Ads** | None |
+| **Features** | Calming colors, ambient music |
+| **Ads** | Ad-free (premium unlock) |
 
-### 7.2 Features
+### 3.4 Word Hunt Mode
 
-- Ambient background music (3 tracks)
-- Calming color palette
-- No score pressure
-- Endless grid refresh
-- Word discovery journaling
+| Parameter | Planned Value |
+|-----------|---------------|
+| **Grid Size** | 8×8 or 10×10 |
+| **Objective** | Find hidden words from list |
+| **Content** | Themed word packs (animals, countries, etc.) |
 
-### 7.3 Functional Requirements
+### 3.5 Versus Mode (PvP)
 
-| ID | Requirement | Priority |
-|----|-------------|----------|
-| FR-ZM-01 | Mode shall be ad-free after purchase | P0 |
-| FR-ZM-02 | Session shall auto-save on app background | P1 |
-| FR-ZM-03 | Grid shall refresh on user request | P1 |
-
----
-
-## 8. Mode Unlock Progression
-
-| Mode | Unlock Condition |
-|------|------------------|
-| Classic | Available from start |
-| Campaign | Complete tutorial (Level 5) |
-| Daily Challenge | Player Level 3 |
-| Word Hunt | Player Level 10 (v2.0) |
-| Versus Mode | Player Level 15 (v2.0) |
-| Zen Mode | Premium purchase (v2.0) |
+| Parameter | Planned Value |
+|-----------|---------------|
+| **Format** | Async or real-time |
+| **Grid** | Same for both players |
+| **Matchmaking** | ELO-based rating |
+| **Rewards** | League system with season rewards |
 
 ---
 
-*Generated by BMAD PRD Workflow v1.0*
+## 4. Mode Unlock Progression (Future)
+
+| Mode | Current Status | Planned Unlock |
+|------|----------------|----------------|
+| Timer Mode | ✅ Available | Always available |
+| Campaign | 📋 Not implemented | Complete tutorial |
+| Daily Challenge | 📋 Not implemented | Player Level 3 |
+| Zen Mode | 📋 Not implemented | Premium unlock |
+| Word Hunt | 📋 Not implemented | Player Level 10 |
+| Versus | 📋 Not implemented | Player Level 15 |
+
+---
+
+*Updated for LetterCrush v1.0 Timer Mode implementation*
+*Generated by BMAD PRD Workflow v2.0*

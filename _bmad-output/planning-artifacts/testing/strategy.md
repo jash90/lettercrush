@@ -1,6 +1,6 @@
-# WordGrid Testing Strategy
+# LetterCrush Testing Strategy
 
-**Parent Document:** [Testing Overview](./overview.md)
+**Parent Document:** [TSD Overview](../tsd/overview.md)
 
 ---
 
@@ -33,8 +33,7 @@
 │  • Unit Test Coverage: >80%                                         │
 │  • Integration Coverage: >70%                                       │
 │  • Critical Path E2E: 100%                                          │
-│  • Build Time: <30 minutes                                          │
-│  • Test Execution: <10 minutes                                      │
+│  • Test Execution: <5 minutes                                       │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -43,562 +42,535 @@
 | Objective | Target | Measurement |
 |-----------|--------|-------------|
 | Prevent Regressions | <1% regression rate | Defect tracking |
-| Fast Feedback | <10min for unit tests | CI metrics |
-| Confidence | 95% deployment confidence | Survey |
+| Fast Feedback | <5min for unit tests | CI metrics |
+| Confidence | 95% deployment confidence | Test pass rate |
 | Documentation | Tests as specification | Code review |
 
 ---
 
-## 2. Test Categories
+## 2. Technology Stack
 
-### 2.1 Unit Tests
+### 2.1 Testing Framework
 
-**Scope**: Individual classes, methods, and functions in isolation
+| Tool | Purpose | Version |
+|------|---------|---------|
+| Jest | Test runner, assertions | Latest |
+| React Native Testing Library | Component testing | Latest |
+| Detox | E2E testing (optional) | Latest |
+| TypeScript | Type-safe tests | 5.3 |
 
-**Framework**: NUnit 3.x with Unity Test Framework
+### 2.2 Test Structure
 
-**Naming Convention**: `[MethodName]_[Scenario]_[ExpectedResult]`
-
-```csharp
-// Example: Dictionary System Unit Tests
-[TestFixture]
-public class TrieDictionaryTests
-{
-    private TrieDictionary _dictionary;
-
-    [SetUp]
-    public void Setup()
-    {
-        _dictionary = new TrieDictionary(Language.English);
-        _dictionary.LoadTestData(TestDictionaries.SmallEnglish);
-    }
-
-    [Test]
-    public void Contains_ValidWord_ReturnsTrue()
-    {
-        Assert.IsTrue(_dictionary.Contains("WORD"));
-    }
-
-    [Test]
-    public void Contains_InvalidWord_ReturnsFalse()
-    {
-        Assert.IsFalse(_dictionary.Contains("XYZZY"));
-    }
-
-    [Test]
-    public void Contains_EmptyString_ReturnsFalse()
-    {
-        Assert.IsFalse(_dictionary.Contains(""));
-    }
-
-    [Test]
-    public void Contains_CaseInsensitive_ReturnsTrue()
-    {
-        Assert.IsTrue(_dictionary.Contains("word"));
-        Assert.IsTrue(_dictionary.Contains("WORD"));
-        Assert.IsTrue(_dictionary.Contains("Word"));
-    }
-
-    [Test]
-    [TestCase("A", false)]
-    [TestCase("AB", false)]
-    [TestCase("CAT", true)]
-    [TestCase("CATS", true)]
-    public void Contains_MinimumLength_EnforcesThreeLetters(string word, bool expected)
-    {
-        Assert.AreEqual(expected, _dictionary.IsValidGameWord(word));
-    }
-}
+```
+__tests__/
+├── unit/
+│   ├── engine/
+│   │   ├── GridManager.test.ts
+│   │   ├── WordValidator.test.ts
+│   │   └── ScoreCalculator.test.ts
+│   ├── stores/
+│   │   ├── gameStore.test.ts
+│   │   ├── languageStore.test.ts
+│   │   └── settingsStore.test.ts
+│   └── hooks/
+│       ├── useGame.test.ts
+│       ├── useTimer.test.ts
+│       └── useDictionary.test.ts
+├── integration/
+│   ├── GameFlow.test.ts
+│   ├── LanguageSwitch.test.ts
+│   └── HighscorePersistence.test.ts
+└── e2e/
+    ├── GameplayFlow.test.ts
+    └── SettingsFlow.test.ts
 ```
 
-**Unit Test Coverage Targets**:
+---
+
+## 3. Unit Tests
+
+### 3.1 Test Coverage Targets
 
 | Module | Target | Priority |
 |--------|--------|----------|
 | Dictionary System | 100% | P0 |
-| Score Engine | 100% | P0 |
+| Score Calculator | 100% | P0 |
 | Grid Manager | 95% | P0 |
 | Word Validator | 100% | P0 |
-| Progression System | 90% | P1 |
-| Power-up System | 90% | P1 |
-| UI Components | 80% | P1 |
+| Game Store | 90% | P1 |
+| Custom Hooks | 85% | P1 |
+| UI Components | 80% | P2 |
 
-### 2.2 Integration Tests
+### 3.2 Naming Convention
 
-**Scope**: Component interactions, data flow, service integration
+`[methodName]_[scenario]_[expectedResult]`
 
-```csharp
-// Example: Gameplay Integration Tests
-[TestFixture]
-public class GameplayIntegrationTests
-{
-    private GameManager _gameManager;
-    private GridManager _gridManager;
-    private ScoreEngine _scoreEngine;
-    private MockDictionary _dictionary;
+### 3.3 Example Unit Tests
 
-    [SetUp]
-    public void Setup()
-    {
-        _dictionary = new MockDictionary();
-        _dictionary.AddWords("CAT", "DOG", "STAR", "CATS", "DOGS");
+```typescript
+// __tests__/unit/engine/WordValidator.test.ts
+import { isValidWord, loadDictionary, getWordCount } from '@/db/dictionaryDb';
 
-        _scoreEngine = new ScoreEngine();
-        _gridManager = new GridManager(_dictionary);
-        _gameManager = new GameManager(_gridManager, _scoreEngine);
-    }
+describe('WordValidator', () => {
+  beforeAll(async () => {
+    await loadDictionary('en');
+  });
 
-    [Test]
-    public void Swap_CreatesValidWord_ScoreIncreases()
-    {
-        // Arrange
-        _gridManager.SetTestGrid(new char[,] {
-            {'C', 'A', 'T', 'X', 'X', 'X'},
-            {'X', 'X', 'X', 'X', 'X', 'X'},
-            // ... rest of grid
-        });
-        int initialScore = _gameManager.CurrentScore;
+  describe('isValidWord', () => {
+    it('returns true for valid English words', () => {
+      expect(isValidWord('THE')).toBe(true);
+      expect(isValidWord('AND')).toBe(true);
+    });
 
-        // Act - no swap needed, CAT already formed
-        _gameManager.ProcessMatches();
+    it('returns false for invalid words', () => {
+      expect(isValidWord('XYZ')).toBe(false);
+      expect(isValidWord('ASDF')).toBe(false);
+    });
 
-        // Assert
-        Assert.Greater(_gameManager.CurrentScore, initialScore);
-    }
+    it('is case-insensitive', () => {
+      expect(isValidWord('the')).toBe(true);
+      expect(isValidWord('The')).toBe(true);
+      expect(isValidWord('THE')).toBe(true);
+    });
 
-    [Test]
-    public async Task Cascade_MultipleWords_ComboMultiplierApplied()
-    {
-        // Arrange - setup grid that will cascade
-        _gridManager.SetTestGrid(CreateCascadeTestGrid());
+    it('returns false for empty string', () => {
+      expect(isValidWord('')).toBe(false);
+    });
 
-        // Act
-        await _gameManager.ProcessMatchesAsync();
+    it('returns false for words shorter than 3 letters', () => {
+      expect(isValidWord('A')).toBe(false);
+      expect(isValidWord('AB')).toBe(false);
+    });
+  });
 
-        // Assert
-        Assert.Greater(_gameManager.CurrentCombo, 1);
-    }
-}
+  describe('getWordCount', () => {
+    it('returns positive count after loading', () => {
+      expect(getWordCount()).toBeGreaterThan(0);
+    });
+  });
+});
 ```
 
-**Integration Test Scenarios**:
+```typescript
+// __tests__/unit/engine/ScoreCalculator.test.ts
+import {
+  calculateScore,
+  getLetterValue,
+  getLengthBonus,
+  getComboMultiplier,
+} from '@/engine/ScoreCalculator';
+
+describe('ScoreCalculator', () => {
+  describe('getLetterValue', () => {
+    it('returns correct value for common English letters', () => {
+      expect(getLetterValue('E', 'en')).toBe(1);
+      expect(getLetterValue('A', 'en')).toBe(1);
+    });
+
+    it('returns higher value for rare letters', () => {
+      expect(getLetterValue('Q', 'en')).toBe(10);
+      expect(getLetterValue('Z', 'en')).toBe(10);
+    });
+  });
+
+  describe('getLengthBonus', () => {
+    it('returns 1 for 3-letter words', () => {
+      expect(getLengthBonus(3)).toBe(1);
+    });
+
+    it('returns higher bonus for longer words', () => {
+      expect(getLengthBonus(5)).toBeGreaterThan(getLengthBonus(4));
+      expect(getLengthBonus(6)).toBeGreaterThan(getLengthBonus(5));
+    });
+  });
+
+  describe('getComboMultiplier', () => {
+    it('returns 1 for first word (no combo)', () => {
+      expect(getComboMultiplier(0)).toBe(1);
+    });
+
+    it('returns increasing multiplier for combos', () => {
+      expect(getComboMultiplier(1)).toBeGreaterThan(1);
+      expect(getComboMultiplier(2)).toBeGreaterThan(getComboMultiplier(1));
+    });
+  });
+
+  describe('calculateScore', () => {
+    it('calculates score correctly for simple word', () => {
+      const score = calculateScore('CAT', 0, 'en');
+      expect(score).toBeGreaterThan(0);
+    });
+
+    it('applies combo multiplier', () => {
+      const baseScore = calculateScore('CAT', 0, 'en');
+      const comboScore = calculateScore('CAT', 2, 'en');
+      expect(comboScore).toBeGreaterThan(baseScore);
+    });
+  });
+});
+```
+
+### 3.4 Store Testing
+
+```typescript
+// __tests__/unit/stores/gameStore.test.ts
+import { useGameStore } from '@/stores/gameStore';
+import { act, renderHook } from '@testing-library/react-hooks';
+
+describe('gameStore', () => {
+  beforeEach(() => {
+    useGameStore.getState().resetGame();
+  });
+
+  describe('initGame', () => {
+    it('initializes grid with correct dimensions', () => {
+      const { result } = renderHook(() => useGameStore());
+
+      act(() => {
+        result.current.initGame();
+      });
+
+      expect(result.current.grid.length).toBe(6);
+      expect(result.current.grid[0].length).toBe(6);
+    });
+
+    it('sets timer to 120 seconds', () => {
+      const { result } = renderHook(() => useGameStore());
+
+      act(() => {
+        result.current.initGame();
+      });
+
+      expect(result.current.timer).toBe(120);
+    });
+
+    it('sets phase to idle', () => {
+      const { result } = renderHook(() => useGameStore());
+
+      act(() => {
+        result.current.initGame();
+      });
+
+      expect(result.current.phase).toBe('idle');
+    });
+  });
+
+  describe('toggleLetterSelection', () => {
+    it('adds letter to selection when not selected', () => {
+      const { result } = renderHook(() => useGameStore());
+
+      act(() => {
+        result.current.initGame();
+        result.current.toggleLetterSelection({ row: 0, col: 0 });
+      });
+
+      expect(result.current.selectedLetters).toHaveLength(1);
+    });
+
+    it('removes letter from selection when already selected', () => {
+      const { result } = renderHook(() => useGameStore());
+
+      act(() => {
+        result.current.initGame();
+        result.current.toggleLetterSelection({ row: 0, col: 0 });
+        result.current.toggleLetterSelection({ row: 0, col: 0 });
+      });
+
+      expect(result.current.selectedLetters).toHaveLength(0);
+    });
+  });
+
+  describe('submitWord', () => {
+    it('adds strike for invalid word', async () => {
+      const { result } = renderHook(() => useGameStore());
+
+      act(() => {
+        result.current.initGame();
+        // Select letters that form invalid word
+        result.current.toggleLetterSelection({ row: 0, col: 0 });
+        result.current.toggleLetterSelection({ row: 0, col: 1 });
+        result.current.toggleLetterSelection({ row: 0, col: 2 });
+      });
+
+      // Mock invalid word
+      await act(async () => {
+        await result.current.submitWord();
+      });
+
+      expect(result.current.strikes).toBeGreaterThanOrEqual(0);
+    });
+  });
+});
+```
+
+---
+
+## 4. Integration Tests
+
+### 4.1 Integration Test Scenarios
 
 | Scenario | Components | Validation |
 |----------|------------|------------|
 | Word Match Flow | Grid → Validator → Score | Score updates correctly |
 | Cascade Chain | Grid → Validator → Score → Grid | Combo multiplier applied |
-| Power-up Usage | Inventory → Grid → Score | Effect applied, count decreased |
-| Level Complete | Game → Progression → Cloud | XP/rewards saved |
-| IAP Flow | Store → Backend → Inventory | Items delivered |
+| Language Switch | Store → Database → Grid | Dictionary loads, grid regenerates |
+| Highscore Save | Game → Database → Stats | Score persisted, leaderboard updated |
+| Game Over | Timer/Strikes → Modal → Ad | Flow completes correctly |
 
-### 2.3 End-to-End Tests
+### 4.2 Example Integration Tests
 
-**Scope**: Complete user journeys through the application
+```typescript
+// __tests__/integration/GameFlow.test.ts
+import { renderHook, act } from '@testing-library/react-hooks';
+import { useGameStore } from '@/stores/gameStore';
+import { loadDictionary } from '@/db/dictionaryDb';
 
-**Framework**: Unity Test Framework with Appium for device testing
+describe('Game Flow Integration', () => {
+  beforeAll(async () => {
+    await loadDictionary('en');
+  });
 
-```csharp
-// Example: E2E Test Scenarios
-[TestFixture]
-public class E2EGameplayTests
-{
-    private TestDriver _driver;
+  it('completes full game cycle from start to game over', async () => {
+    const { result } = renderHook(() => useGameStore());
 
-    [OneTimeSetUp]
-    public void GlobalSetup()
-    {
-        _driver = new TestDriver();
-        _driver.LaunchApp();
+    // Initialize game
+    act(() => {
+      result.current.initGame();
+    });
+
+    expect(result.current.phase).toBe('idle');
+    expect(result.current.timer).toBe(120);
+    expect(result.current.score).toBe(0);
+
+    // Simulate timer expiry
+    act(() => {
+      result.current.setTimer(0);
+    });
+
+    expect(result.current.phase).toBe('gameOver');
+  });
+
+  it('accumulates strikes and triggers game over at 3', async () => {
+    const { result } = renderHook(() => useGameStore());
+
+    act(() => {
+      result.current.initGame();
+    });
+
+    // Add 3 strikes
+    for (let i = 0; i < 3; i++) {
+      act(() => {
+        result.current.addStrike();
+      });
     }
 
-    [Test]
-    public async Task ClassicMode_CompleteGame_ShowsResults()
-    {
-        // Navigate to Classic mode
-        await _driver.Tap("MainMenu_PlayButton");
-        await _driver.WaitForScreen("ModeSelection");
-        await _driver.Tap("ModeSelection_ClassicButton");
-
-        // Wait for gameplay to load
-        await _driver.WaitForScreen("Gameplay");
-        Assert.IsTrue(_driver.IsVisible("Gameplay_Timer"));
-
-        // Play until game ends (simulate or wait)
-        await _driver.WaitForElement("GameOver_Panel", timeout: 130000);
-
-        // Verify results screen
-        Assert.IsTrue(_driver.IsVisible("Results_Score"));
-        Assert.IsTrue(_driver.IsVisible("Results_HomeButton"));
-        Assert.IsTrue(_driver.IsVisible("Results_ReplayButton"));
-    }
-
-    [Test]
-    public async Task DailyChallenge_CompleteStreak_RewardsGranted()
-    {
-        // Setup: Ensure streak at day 6
-        await _driver.SetTestState("DailyStreak", 6);
-
-        // Complete daily challenge
-        await NavigateToDailyChallenge();
-        await CompleteDailyChallenge();
-
-        // Verify day 7 streak reward
-        Assert.IsTrue(_driver.IsVisible("StreakReward_Day7"));
-        var rewardText = await _driver.GetText("StreakReward_Description");
-        Assert.That(rewardText, Contains.Substring("Rare Power-up"));
-    }
-}
+    expect(result.current.strikes).toBe(3);
+    expect(result.current.phase).toBe('gameOver');
+  });
+});
 ```
 
-**Critical E2E Paths**:
+```typescript
+// __tests__/integration/LanguageSwitch.test.ts
+import { useLanguageStore } from '@/stores/languageStore';
+import { useGameStore } from '@/stores/gameStore';
+import { getWordCount } from '@/db/dictionaryDb';
+import { renderHook, act, waitFor } from '@testing-library/react-hooks';
 
-| Journey | Priority | Frequency |
-|---------|----------|-----------|
-| First-time user onboarding | P0 | Every build |
-| Classic mode complete game | P0 | Every build |
-| IAP purchase flow | P0 | Every release |
-| Daily challenge completion | P0 | Daily |
-| Campaign level progression | P1 | Every release |
-| PvP match flow | P1 | Every release |
-| Cloud save/restore | P1 | Every release |
+describe('Language Switch Integration', () => {
+  it('loads correct dictionary when language changes', async () => {
+    const { result: langResult } = renderHook(() => useLanguageStore());
+
+    await act(async () => {
+      await langResult.current.setLanguage('en');
+    });
+
+    const englishCount = getWordCount();
+
+    await act(async () => {
+      await langResult.current.setLanguage('pl');
+    });
+
+    const polishCount = getWordCount();
+
+    // Both dictionaries should have words loaded
+    expect(englishCount).toBeGreaterThan(0);
+    expect(polishCount).toBeGreaterThan(0);
+  });
+
+  it('regenerates grid when language changes during game', async () => {
+    const { result: langResult } = renderHook(() => useLanguageStore());
+    const { result: gameResult } = renderHook(() => useGameStore());
+
+    await act(async () => {
+      await langResult.current.setLanguage('en');
+      gameResult.current.initGame();
+    });
+
+    const englishGrid = JSON.stringify(gameResult.current.grid);
+
+    await act(async () => {
+      await langResult.current.setLanguage('pl');
+      gameResult.current.initGame();
+    });
+
+    const polishGrid = JSON.stringify(gameResult.current.grid);
+
+    // Grids should be different (new letters)
+    expect(englishGrid).not.toBe(polishGrid);
+  });
+});
+```
 
 ---
 
-## 3. Specialized Testing
+## 5. E2E Tests (Optional)
 
-### 3.1 Performance Testing
+### 5.1 Detox Configuration
 
-**Metrics & Thresholds**:
+```javascript
+// .detoxrc.js
+module.exports = {
+  testRunner: {
+    args: {
+      $0: 'jest',
+      config: 'e2e/jest.config.js',
+    },
+    jest: {
+      setupTimeout: 120000,
+    },
+  },
+  apps: {
+    'ios.debug': {
+      type: 'ios.app',
+      binaryPath: 'ios/build/Build/Products/Debug-iphonesimulator/LetterCrush.app',
+      build: 'xcodebuild -workspace ios/LetterCrush.xcworkspace -scheme LetterCrush -configuration Debug -sdk iphonesimulator -derivedDataPath ios/build',
+    },
+    'android.debug': {
+      type: 'android.apk',
+      binaryPath: 'android/app/build/outputs/apk/debug/app-debug.apk',
+      build: 'cd android && ./gradlew assembleDebug assembleAndroidTest -DtestBuildType=debug',
+    },
+  },
+  devices: {
+    simulator: {
+      type: 'ios.simulator',
+      device: { type: 'iPhone 14' },
+    },
+    emulator: {
+      type: 'android.emulator',
+      device: { avdName: 'Pixel_4_API_30' },
+    },
+  },
+  configurations: {
+    'ios.sim.debug': {
+      device: 'simulator',
+      app: 'ios.debug',
+    },
+    'android.emu.debug': {
+      device: 'emulator',
+      app: 'android.debug',
+    },
+  },
+};
+```
+
+### 5.2 E2E Test Examples
+
+```typescript
+// e2e/GameplayFlow.test.ts
+describe('Gameplay Flow', () => {
+  beforeAll(async () => {
+    await device.launchApp();
+  });
+
+  beforeEach(async () => {
+    await device.reloadReactNative();
+  });
+
+  it('should complete a full game session', async () => {
+    // Navigate to game
+    await element(by.id('play-button')).tap();
+
+    // Verify game screen loaded
+    await expect(element(by.id('game-grid'))).toBeVisible();
+    await expect(element(by.id('timer-display'))).toBeVisible();
+
+    // Wait for game over (or simulate)
+    await waitFor(element(by.id('game-over-modal')))
+      .toBeVisible()
+      .withTimeout(130000);
+
+    // Verify game over modal
+    await expect(element(by.id('final-score'))).toBeVisible();
+    await expect(element(by.id('play-again-button'))).toBeVisible();
+  });
+
+  it('should navigate to settings and back', async () => {
+    await element(by.id('settings-button')).tap();
+    await expect(element(by.id('settings-screen'))).toBeVisible();
+
+    await element(by.id('back-button')).tap();
+    await expect(element(by.id('home-screen'))).toBeVisible();
+  });
+});
+```
+
+---
+
+## 6. Performance Testing
+
+### 6.1 Performance Metrics
 
 | Metric | Target | Critical | Tool |
 |--------|--------|----------|------|
-| Frame Rate | 60 FPS | 30 FPS | Unity Profiler |
-| Memory Usage | <300MB | <400MB | Memory Profiler |
+| Frame Rate | 60 FPS | 30 FPS | React Native Profiler |
+| Memory Usage | <100MB | <150MB | Expo memory tools |
 | Load Time | <3s | <5s | Custom timer |
-| Word Validation | <50ms | <100ms | Stopwatch |
-| Battery Drain | <8%/hr | <12%/hr | Device monitor |
+| Word Validation | <50ms | <100ms | Jest benchmark |
 
-**Performance Test Suite**:
+### 6.2 Performance Test Examples
 
-```csharp
-[TestFixture]
-public class PerformanceTests
-{
-    [Test]
-    [Performance]
-    public void WordValidation_10000Words_Under50ms()
-    {
-        var dictionary = LoadFullDictionary(Language.Polish);
-        var testWords = GenerateTestWords(10000);
+```typescript
+// __tests__/performance/WordValidation.test.ts
+import { loadDictionary, isValidWord } from '@/db/dictionaryDb';
 
-        var sw = Stopwatch.StartNew();
-        foreach (var word in testWords)
-        {
-            dictionary.Contains(word);
-        }
-        sw.Stop();
+describe('Performance: Word Validation', () => {
+  beforeAll(async () => {
+    await loadDictionary('en');
+  });
 
-        var avgMs = sw.ElapsedMilliseconds / 10000.0;
-        Assert.Less(avgMs, 0.05, $"Average lookup: {avgMs}ms");
-    }
+  it('validates 1000 words in under 1 second', () => {
+    const words = generateTestWords(1000);
+    const start = performance.now();
 
-    [Test]
-    [Performance]
-    public void GridGeneration_100Grids_AllHaveValidWords()
-    {
-        var generator = new GridGenerator(Language.Polish);
-        var sw = Stopwatch.StartNew();
+    words.forEach(word => {
+      isValidWord(word);
+    });
 
-        for (int i = 0; i < 100; i++)
-        {
-            var grid = generator.Generate();
-            var words = grid.FindAllWords();
-            Assert.GreaterOrEqual(words.Count, 3, $"Grid {i} has insufficient words");
-        }
+    const duration = performance.now() - start;
+    expect(duration).toBeLessThan(1000);
+  });
 
-        sw.Stop();
-        Assert.Less(sw.ElapsedMilliseconds, 5000, "100 grids should generate in <5s");
-    }
+  it('average lookup time is under 1ms', () => {
+    const words = generateTestWords(1000);
+    const start = performance.now();
 
-    [Test]
-    [Performance]
-    public void CascadeAnimation_10Cascades_MaintainsFrameRate()
-    {
-        // Setup monitoring
-        var frameMonitor = new FrameRateMonitor();
-        frameMonitor.Start();
+    words.forEach(word => {
+      isValidWord(word);
+    });
 
-        // Trigger cascades
-        for (int i = 0; i < 10; i++)
-        {
-            TriggerTestCascade();
-            WaitForAnimationComplete();
-        }
-
-        frameMonitor.Stop();
-
-        Assert.GreaterOrEqual(frameMonitor.MinFPS, 30);
-        Assert.GreaterOrEqual(frameMonitor.AverageFPS, 55);
-    }
-}
-```
-
-### 3.2 Security Testing
-
-**Security Test Areas**:
-
-| Area | Test Type | Frequency |
-|------|-----------|-----------|
-| Score Validation | Fuzz testing | Every release |
-| API Authentication | Penetration | Quarterly |
-| Data Encryption | Verification | Every release |
-| IAP Receipt Validation | Replay attack | Every release |
-| User Data Protection | GDPR compliance | Quarterly |
-
-**Security Test Examples**:
-
-```csharp
-[TestFixture]
-public class SecurityTests
-{
-    [Test]
-    public void ScoreSubmission_InvalidSignature_Rejected()
-    {
-        var fakeScore = new ScoreSubmission {
-            Score = 999999,
-            Signature = "fake_signature",
-            Timestamp = DateTime.UtcNow
-        };
-
-        var result = SecurityValidator.ValidateScore(fakeScore);
-        Assert.IsFalse(result.IsValid);
-        Assert.AreEqual(SecurityError.InvalidSignature, result.Error);
-    }
-
-    [Test]
-    public void ScoreSubmission_ImpossibleScore_Flagged()
-    {
-        // Max theoretical score in 2 minutes is ~50,000
-        var impossibleScore = new ScoreSubmission {
-            Score = 1000000,
-            GameDuration = 120,
-            WordsFound = 10
-        };
-
-        var result = SecurityValidator.ValidateScore(impossibleScore);
-        Assert.IsFalse(result.IsValid);
-        Assert.AreEqual(SecurityError.StatisticalAnomaly, result.Error);
-    }
-
-    [Test]
-    public void IAPReceipt_ReplayAttack_Rejected()
-    {
-        var usedReceipt = GetPreviouslyUsedReceipt();
-
-        var result = IAPValidator.ValidateReceipt(usedReceipt);
-        Assert.IsFalse(result.IsValid);
-        Assert.AreEqual(IAPError.ReceiptAlreadyUsed, result.Error);
-    }
-}
-```
-
-### 3.3 Localization Testing
-
-**Language Test Matrix**:
-
-| Test | Polish | English | Notes |
-|------|--------|---------|-------|
-| UI Text Fit | ✅ | ✅ | Check truncation |
-| Dictionary Load | ✅ | ✅ | Full word lists |
-| Special Characters | Ą,Ć,Ę,Ł,Ń,Ó,Ś,Ź,Ż | N/A | Rendering |
-| Letter Distribution | ✅ | ✅ | Balanced grids |
-| Date/Time Format | dd.MM.yyyy | MM/dd/yyyy | Locale |
-| Number Format | 1 000,50 | 1,000.50 | Locale |
-
-```csharp
-[TestFixture]
-public class LocalizationTests
-{
-    [Test]
-    [TestCase(Language.Polish)]
-    [TestCase(Language.English)]
-    public void Dictionary_AllWordsValid_ForLanguage(Language lang)
-    {
-        var dictionary = DictionaryLoader.Load(lang);
-
-        Assert.Greater(dictionary.WordCount, 100000);
-
-        // Verify sample words exist
-        var sampleWords = GetSampleWords(lang);
-        foreach (var word in sampleWords)
-        {
-            Assert.IsTrue(dictionary.Contains(word), $"Missing: {word}");
-        }
-    }
-
-    [Test]
-    [TestCase(Language.Polish)]
-    [TestCase(Language.English)]
-    public void LetterDistribution_GeneratesValidGrids(Language lang)
-    {
-        var distribution = LetterDistribution.ForLanguage(lang);
-        var generator = new GridGenerator(distribution);
-
-        for (int i = 0; i < 100; i++)
-        {
-            var grid = generator.Generate();
-            var words = grid.FindAllWords();
-            Assert.GreaterOrEqual(words.Count, 3, $"Grid {i} insufficient words");
-        }
-    }
-
-    [Test]
-    public void Polish_SpecialCharacters_RenderCorrectly()
-    {
-        var polishChars = "ĄĆĘŁŃÓŚŹŻ";
-
-        foreach (char c in polishChars)
-        {
-            var tile = CreateTile(c);
-            Assert.IsNotNull(tile.Sprite, $"Missing sprite for: {c}");
-            Assert.AreEqual(c.ToString(), tile.Label.text);
-        }
-    }
-}
-```
-
-### 3.4 Accessibility Testing
-
-**Accessibility Test Checklist**:
-
-| Feature | Test | Validation |
-|---------|------|------------|
-| VoiceOver | Navigation | All elements announced |
-| TalkBack | Touch exploration | Correct labels |
-| Color Blind | All modes | Distinguishable colors |
-| Dynamic Type | Font scaling | No truncation |
-| Reduced Motion | Animations | Essential only |
-| Touch Targets | Minimum 44pt | All interactive elements |
-
-```csharp
-[TestFixture]
-public class AccessibilityTests
-{
-    [Test]
-    public void AllButtons_MeetMinimumTouchTarget()
-    {
-        var buttons = FindAllInteractiveElements();
-
-        foreach (var button in buttons)
-        {
-            var size = button.GetComponent<RectTransform>().sizeDelta;
-            Assert.GreaterOrEqual(size.x, 44, $"{button.name} width too small");
-            Assert.GreaterOrEqual(size.y, 44, $"{button.name} height too small");
-        }
-    }
-
-    [Test]
-    public void ColorBlindMode_TileColors_Distinguishable()
-    {
-        var modes = new[] { ColorBlindMode.Deuteranopia, ColorBlindMode.Protanopia, ColorBlindMode.Tritanopia };
-
-        foreach (var mode in modes)
-        {
-            ApplyColorBlindMode(mode);
-
-            var validColor = GetTileColor(TileState.Valid);
-            var invalidColor = GetTileColor(TileState.Invalid);
-            var bonusColor = GetTileColor(TileState.Bonus);
-
-            // Check color distance meets WCAG threshold
-            Assert.Greater(ColorDistance(validColor, invalidColor), 4.5);
-            Assert.Greater(ColorDistance(validColor, bonusColor), 4.5);
-            Assert.Greater(ColorDistance(invalidColor, bonusColor), 4.5);
-        }
-    }
-
-    [Test]
-    public void VoiceOver_GameplayElements_HaveLabels()
-    {
-        var grid = CreateTestGrid();
-
-        foreach (var tile in grid.Tiles)
-        {
-            Assert.IsNotNull(tile.AccessibilityLabel);
-            Assert.That(tile.AccessibilityLabel, Contains.Substring("Letter"));
-            Assert.That(tile.AccessibilityLabel, Contains.Substring("row"));
-        }
-    }
-}
+    const avgMs = (performance.now() - start) / 1000;
+    expect(avgMs).toBeLessThan(1);
+  });
+});
 ```
 
 ---
 
-## 4. Test Data Management
+## 7. CI/CD Integration
 
-### 4.1 Test Data Strategy
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                      TEST DATA ARCHITECTURE                          │
-│                                                                      │
-│  Static Test Data                                                    │
-│  ├── test_dictionaries/                                             │
-│  │   ├── small_english.txt (1,000 words)                           │
-│  │   ├── small_polish.txt (1,000 words)                            │
-│  │   └── edge_cases.txt (special scenarios)                        │
-│  │                                                                   │
-│  ├── test_grids/                                                    │
-│  │   ├── valid_grids.json (pre-validated)                          │
-│  │   ├── cascade_grids.json (trigger cascades)                     │
-│  │   └── edge_case_grids.json                                      │
-│  │                                                                   │
-│  └── test_profiles/                                                 │
-│      ├── new_user.json                                              │
-│      ├── veteran_user.json                                          │
-│      └── premium_user.json                                          │
-│                                                                      │
-│  Dynamic Test Data                                                   │
-│  ├── Generated grids (runtime)                                      │
-│  ├── Randomized user profiles                                       │
-│  └── Mock server responses                                          │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-### 4.2 Mock Services
-
-```csharp
-public interface IMockService
-{
-    void SetResponse<T>(string endpoint, T response);
-    void SetError(string endpoint, int statusCode, string message);
-    void SetLatency(string endpoint, int milliseconds);
-    void Reset();
-}
-
-// Example usage
-[Test]
-public async Task Leaderboard_ServerError_ShowsCachedData()
-{
-    // Arrange
-    _mockServer.SetError("/leaderboard", 500, "Server Error");
-    _mockCache.Set("leaderboard", cachedLeaderboard);
-
-    // Act
-    var result = await _leaderboardService.GetTopScores();
-
-    // Assert
-    Assert.IsNotNull(result);
-    Assert.AreEqual(cachedLeaderboard.Scores, result.Scores);
-    Assert.IsTrue(result.IsCached);
-}
-```
-
----
-
-## 5. CI/CD Integration
-
-### 5.1 Pipeline Configuration
+### 7.1 GitHub Actions Workflow
 
 ```yaml
 # .github/workflows/test.yml
@@ -615,167 +587,121 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Setup Unity
-        uses: game-ci/unity-test-runner@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          testMode: editmode
-          artifactsPath: test-results
+          node-version: '18'
+          cache: 'npm'
 
-      - name: Upload Results
-        uses: actions/upload-artifact@v3
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm test -- --coverage
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
         with:
-          name: unit-test-results
-          path: test-results
+          files: ./coverage/lcov.info
 
-  integration-tests:
+  lint-and-typecheck:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    needs: unit-tests
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Run Integration Tests
-        uses: game-ci/unity-test-runner@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          testMode: playmode
+          node-version: '18'
+          cache: 'npm'
 
-  build-and-e2e:
-    runs-on: macos-latest
-    timeout-minutes: 60
-    needs: integration-tests
-    steps:
-      - name: Build iOS
-        uses: game-ci/unity-builder@v2
-        with:
-          targetPlatform: iOS
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Run E2E Tests
-        run: |
-          xcrun simctl boot "iPhone 14"
-          xcodebuild test -workspace WordGrid.xcworkspace -scheme WordGridUITests
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
 ```
 
-### 5.2 Quality Gates
+### 7.2 Quality Gates
 
 | Gate | Criteria | Blocking |
 |------|----------|----------|
 | Unit Tests | 100% pass | Yes |
 | Coverage | >80% | Yes |
-| Integration Tests | 100% pass | Yes |
-| Performance | Meet thresholds | Yes (release) |
-| Security Scan | No critical issues | Yes |
-| Lint | No errors | Yes |
+| TypeScript | No errors | Yes |
+| ESLint | No errors | Yes |
+| Build | Successful | Yes |
 
 ---
 
-## 6. Test Environments
+## 8. Test Commands
 
-### 6.1 Environment Matrix
+```bash
+# Run all tests
+npm test
 
-| Environment | Purpose | Data | Backend |
-|-------------|---------|------|---------|
-| Local | Developer testing | Mock | Mock/Local |
-| CI | Automated tests | Test fixtures | Mock |
-| Staging | QA testing | Sanitized prod | Staging servers |
-| Beta | External testing | Test accounts | Production (sandboxed) |
-| Production | Live | Real | Production |
+# Run tests in watch mode
+npm test -- --watch
 
-### 6.2 Device Test Matrix
+# Run tests with coverage
+npm test -- --coverage
 
-| Device | OS Version | Priority | Testing |
-|--------|------------|----------|---------|
-| iPhone SE (2nd gen) | iOS 14 | P0 | Manual + E2E |
-| iPhone 12 | iOS 15 | P0 | E2E |
-| iPhone 14 Pro | iOS 17 | P0 | Manual + E2E |
-| iPad Air | iOS 16 | P1 | Manual |
-| Samsung Galaxy A52 | Android 11 | P0 | Manual + E2E |
-| Google Pixel 6 | Android 13 | P0 | E2E |
-| OnePlus 9 | Android 14 | P1 | Manual |
+# Run specific test file
+npm test -- WordValidator.test.ts
 
----
+# Run E2E tests (Detox)
+npx detox test -c ios.sim.debug
 
-## 7. Bug Tracking & Reporting
+# Lint check
+npm run lint
 
-### 7.1 Bug Severity Levels
-
-| Level | Description | Response Time | Example |
-|-------|-------------|---------------|---------|
-| Critical | App crash, data loss | <4 hours | Crash on launch |
-| High | Major feature broken | <24 hours | Cannot complete game |
-| Medium | Feature degraded | <1 week | Score display wrong |
-| Low | Minor issue | Next sprint | Typo in UI |
-
-### 7.2 Bug Report Template
-
-```markdown
-## Bug Report
-
-**Summary**: [Brief description]
-
-**Severity**: [Critical/High/Medium/Low]
-
-**Steps to Reproduce**:
-1. [Step 1]
-2. [Step 2]
-3. [Step 3]
-
-**Expected Result**: [What should happen]
-
-**Actual Result**: [What actually happens]
-
-**Environment**:
-- Device: [e.g., iPhone 14]
-- OS: [e.g., iOS 17.2]
-- App Version: [e.g., 1.0.0 (123)]
-- Language: [e.g., Polish]
-
-**Screenshots/Video**: [Attach if applicable]
-
-**Logs**: [Attach crash logs if available]
+# Type check
+npm run typecheck
 ```
 
 ---
 
-## 8. Test Metrics & Reporting
+## 9. Mocking Strategy
 
-### 8.1 Key Metrics
+### 9.1 Common Mocks
 
-| Metric | Target | Current | Trend |
-|--------|--------|---------|-------|
-| Test Coverage | >80% | - | - |
-| Test Pass Rate | >99% | - | - |
-| Flaky Test Rate | <1% | - | - |
-| Build Success Rate | >95% | - | - |
-| Mean Time to Fix | <4 hours | - | - |
-
-### 8.2 Reporting Dashboard
-
+```typescript
+// __mocks__/expo-sqlite.ts
+export const openDatabaseSync = jest.fn(() => ({
+  runAsync: jest.fn(),
+  getAllAsync: jest.fn(),
+  getFirstAsync: jest.fn(),
+  withTransactionAsync: jest.fn((callback) => callback()),
+}));
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                      TEST DASHBOARD                                  │
-│                                                                      │
-│  Build Status: ✅ Passing                 Last Run: 2 hours ago     │
-│                                                                      │
-│  Coverage                    Test Results                            │
-│  ┌────────────────┐         ┌────────────────────────────────┐      │
-│  │ ████████░░ 82% │         │ ✅ Unit: 1,245/1,245 passed    │      │
-│  └────────────────┘         │ ✅ Integration: 89/89 passed   │      │
-│                             │ ✅ E2E: 24/24 passed           │      │
-│  Performance                │ ⚠️ Performance: 18/20 passed   │      │
-│  ┌────────────────┐         └────────────────────────────────┘      │
-│  │ FPS: 58 avg    │                                                 │
-│  │ Memory: 285MB  │         Failed Tests:                           │
-│  │ Load: 2.8s     │         - PerformanceTests.Memory_Under300MB    │
-│  └────────────────┘         - PerformanceTests.Cascade_10_FPS       │
-│                                                                      │
-│  Recent Failures            Flaky Tests (Last 7 days)               │
-│  ├── Memory test (3x)       ├── NetworkTest.Timeout (2.1%)          │
-│  └── Cascade FPS (2x)       └── E2E.DailyChallenge (1.8%)           │
-└─────────────────────────────────────────────────────────────────────┘
+
+```typescript
+// __mocks__/@react-native-async-storage/async-storage.ts
+const storage: Record<string, string> = {};
+
+export default {
+  setItem: jest.fn((key, value) => {
+    storage[key] = value;
+    return Promise.resolve();
+  }),
+  getItem: jest.fn((key) => Promise.resolve(storage[key] || null)),
+  removeItem: jest.fn((key) => {
+    delete storage[key];
+    return Promise.resolve();
+  }),
+  clear: jest.fn(() => {
+    Object.keys(storage).forEach(key => delete storage[key]);
+    return Promise.resolve();
+  }),
+};
 ```
 
 ---
 
-*Generated by BMAD PRD Workflow v1.0*
+*Updated for LetterCrush React Native + Expo + Jest testing stack*
+*Generated by BMAD TSD Workflow v2.0*
