@@ -3,7 +3,7 @@
  * Handles banner and interstitial ads with state subscriptions
  */
 
-import {
+import mobileAds, {
   InterstitialAd,
   AdEventType,
 } from 'react-native-google-mobile-ads';
@@ -36,6 +36,10 @@ class AdService {
     if (this.state.isInitialized) return;
 
     try {
+      // CRITICAL: Initialize the Google Mobile Ads SDK first
+      await mobileAds().initialize();
+      console.log('[AdService] SDK initialized');
+
       // Create interstitial ad instance
       this.interstitial = InterstitialAd.createForAdRequest(
         adConfig.unitIds.interstitial,
