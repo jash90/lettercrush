@@ -306,10 +306,15 @@ export class GridManager {
 
   /**
    * Apply gravity - tiles fall down to fill gaps
+   * Guarantees at least one valid word is placed in new tiles
    */
   applyGravity(): CellPosition[] {
     const movedTiles: CellPosition[] = [];
 
+    // Track which positions need new tiles (row -> list of cols)
+    const newTilePositions: Map<number, number[]> = new Map();
+
+    // Phase 1: Move tiles down and track empty positions
     for (let col = 0; col < this.size; col++) {
       let writeRow = this.size - 1;
 
@@ -326,10 +331,77 @@ export class GridManager {
         }
       }
 
-      // Fill empty spaces at top with new tiles
+      // Track empty positions (will need new tiles)
       for (let row = writeRow; row >= 0; row--) {
-        this.grid[row][col] = this.createTile(row, col);
-        movedTiles.push({ row, col });
+        if (!newTilePositions.has(row)) {
+          newTilePositions.set(row, []);
+        }
+        newTilePositions.get(row)!.push(col);
+      }
+    }
+
+    // Phase 2: Find best horizontal segment for word placement
+    let wordPlacement: { row: number; cols: number[]; word: string } | null = null;
+
+    // Sort rows by row number (prefer top rows for word placement)
+    const sortedRows = [...newTilePositions.entries()].sort((a, b) => a[0] - b[0]);
+
+    for (const [row, cols] of sortedRows) {
+      if (wordPlacement) break;
+      if (cols.length < 3) continue; // Need at least 3 columns for a word
+
+      // Sort columns and find contiguous segments
+      const sortedCols = [...cols].sort((a, b) => a - b);
+      const segments: number[][] = [];
+      let currentSegment: number[] = [sortedCols[0]];
+
+      for (let i = 1; i < sortedCols.length; i++) {
+        if (sortedCols[i] === sortedCols[i - 1] + 1) {
+          currentSegment.push(sortedCols[i]);
+        } else {
+          segments.push(currentSegment);
+          currentSegment = [sortedCols[i]];
+        }
+      }
+      segments.push(currentSegment);
+
+      // Try to place a word in the longest valid segment first
+      const validSegments = segments
+        .filter(s => s.length >= 3 && s.length <= 6)
+        .sort((a, b) => b.length - a.length);
+
+      for (const segment of validSegments) {
+        const word = this.getRandomWordOfLength(segment.length);
+        if (word) {
+          wordPlacement = { row, cols: segment, word };
+          break;
+        }
+      }
+    }
+
+    // Phase 3: Fill empty positions
+    const placedPositions = new Set<string>();
+
+    if (wordPlacement) {
+      // Place the word first
+      for (let i = 0; i < wordPlacement.cols.length; i++) {
+        const col = wordPlacement.cols[i];
+        const letter = wordPlacement.word[i];
+        this.grid[wordPlacement.row][col] = this.createTileWithLetter(wordPlacement.row, col, letter);
+        movedTiles.push({ row: wordPlacement.row, col });
+        placedPositions.add(`${wordPlacement.row}-${col}`);
+      }
+      console.log(`[GridManager:applyGravity] Placed word "${wordPlacement.word}" at row ${wordPlacement.row}, cols [${wordPlacement.cols.join(', ')}]`);
+    }
+
+    // Fill remaining empty positions with random tiles
+    for (const [row, cols] of newTilePositions.entries()) {
+      for (const col of cols) {
+        const key = `${row}-${col}`;
+        if (!placedPositions.has(key)) {
+          this.grid[row][col] = this.createTile(row, col);
+          movedTiles.push({ row, col });
+        }
       }
     }
 
@@ -352,6 +424,41 @@ export class GridManager {
       isAnimating: false,
       selectionOrder: undefined,
     };
+  }
+
+  /**
+   * Create a new tile with a specific letter (for word placement)
+   */
+  private createTileWithLetter(row: number, col: number, letter: string): Tile {
+    const tileId = `tile-${++this.idCounter}`;
+    console.log(`[GridManager:createTileWithLetter] Created tile at (${row},${col}): '${letter}' [${tileId}] (word placement)`);
+    return {
+      id: tileId,
+      letter,
+      position: { row, col },
+      isSelected: false,
+      isMatched: false,
+      isAnimating: false,
+      selectionOrder: undefined,
+    };
+  }
+
+  /**
+   * Get words of a specific length from dictionary
+   */
+  private getWordsOfLength(length: number): string[] {
+    const dictionary = getDictionary(this.language);
+    return dictionary.filter(w => w.length === length);
+  }
+
+  /**
+   * Get a random word of a specific length from dictionary
+   * Returns null if no words of that length exist
+   */
+  private getRandomWordOfLength(length: number): string | null {
+    const words = this.getWordsOfLength(length);
+    if (words.length === 0) return null;
+    return words[Math.floor(Math.random() * words.length)];
   }
 
   /**

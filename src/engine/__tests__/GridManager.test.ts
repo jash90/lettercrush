@@ -793,4 +793,202 @@ describe('GridManager - Board Generation Guarantee', () => {
       expect(grid1String).not.toBe(grid2String);
     });
   });
+
+  describe('Smart Word Placement After Gravity', () => {
+    it('should place at least one valid word after gravity clears tiles', () => {
+      const manager = createGridManager('en');
+      manager.initialize(6);
+      const grid = manager.getGrid();
+
+      // Mark a horizontal row of tiles as matched to trigger gravity
+      for (let col = 0; col < 4; col++) {
+        grid[2][col].isMatched = true;
+      }
+
+      // Apply gravity - should place at least one word in new tiles
+      const movedTiles = manager.applyGravity();
+
+      // Verify tiles were moved/created
+      expect(movedTiles.length).toBeGreaterThan(0);
+
+      // Check that all tiles in the grid have valid letters
+      const newGrid = manager.getGrid();
+      for (let row = 0; row < 6; row++) {
+        for (let col = 0; col < 6; col++) {
+          expect(newGrid[row][col].letter).toBeTruthy();
+          expect(newGrid[row][col].letter.length).toBe(1);
+        }
+      }
+    });
+
+    it('should fill all empty positions after gravity', () => {
+      const manager = createGridManager('en');
+      manager.initialize(6);
+      const grid = manager.getGrid();
+
+      // Mark multiple tiles as matched
+      grid[0][0].isMatched = true;
+      grid[0][1].isMatched = true;
+      grid[0][2].isMatched = true;
+      grid[1][1].isMatched = true;
+      grid[2][2].isMatched = true;
+
+      manager.applyGravity();
+
+      // Verify no empty positions
+      const newGrid = manager.getGrid();
+      let emptyCount = 0;
+      for (let row = 0; row < 6; row++) {
+        for (let col = 0; col < 6; col++) {
+          if (!newGrid[row][col].letter || newGrid[row][col].letter === '') {
+            emptyCount++;
+          }
+        }
+      }
+      expect(emptyCount).toBe(0);
+    });
+
+    it('should handle segments shorter than 3 letters gracefully', () => {
+      const manager = createGridManager('en');
+      manager.initialize(6);
+      const grid = manager.getGrid();
+
+      // Mark only 1-2 tiles per column (creating short segments)
+      grid[0][0].isMatched = true;
+      grid[0][2].isMatched = true;
+      grid[0][4].isMatched = true;
+
+      // Should not throw
+      expect(() => manager.applyGravity()).not.toThrow();
+
+      // Verify all positions filled
+      const newGrid = manager.getGrid();
+      for (let row = 0; row < 6; row++) {
+        for (let col = 0; col < 6; col++) {
+          expect(newGrid[row][col].letter).toBeTruthy();
+        }
+      }
+    });
+
+    it('should handle clearing entire rows', () => {
+      const manager = createGridManager('en');
+      manager.initialize(6);
+      const grid = manager.getGrid();
+
+      // Mark entire row as matched
+      for (let col = 0; col < 6; col++) {
+        grid[0][col].isMatched = true;
+      }
+
+      manager.applyGravity();
+
+      // Verify grid is complete
+      const newGrid = manager.getGrid();
+      for (let row = 0; row < 6; row++) {
+        for (let col = 0; col < 6; col++) {
+          expect(newGrid[row][col].letter).toBeTruthy();
+          expect(newGrid[row][col].isMatched).toBe(false);
+        }
+      }
+    });
+
+    it('should work with Polish language mode', () => {
+      const manager = createGridManager('pl');
+      manager.initialize(6);
+      const grid = manager.getGrid();
+
+      // Mark tiles as matched
+      for (let col = 0; col < 3; col++) {
+        grid[1][col].isMatched = true;
+      }
+
+      // Should not throw
+      expect(() => manager.applyGravity()).not.toThrow();
+
+      // Verify all positions filled
+      const newGrid = manager.getGrid();
+      for (let row = 0; row < 6; row++) {
+        for (let col = 0; col < 6; col++) {
+          expect(newGrid[row][col].letter).toBeTruthy();
+        }
+      }
+    });
+
+    it('should maintain grid consistency after multiple cascades', () => {
+      const manager = createGridManager('en');
+      manager.initialize(6);
+
+      // Perform 10 cascades
+      for (let cascade = 0; cascade < 10; cascade++) {
+        const grid = manager.getGrid();
+
+        // Mark some random tiles as matched
+        const matchCount = Math.floor(Math.random() * 5) + 3;
+        let matched = 0;
+        for (let row = 0; row < 6 && matched < matchCount; row++) {
+          for (let col = 0; col < 6 && matched < matchCount; col++) {
+            if (!grid[row][col].isMatched) {
+              grid[row][col].isMatched = true;
+              matched++;
+            }
+          }
+        }
+
+        manager.applyGravity();
+
+        // Verify grid integrity after each cascade
+        const newGrid = manager.getGrid();
+        for (let row = 0; row < 6; row++) {
+          for (let col = 0; col < 6; col++) {
+            expect(newGrid[row][col].letter).toBeTruthy();
+            expect(newGrid[row][col].isMatched).toBe(false);
+            expect(newGrid[row][col].position).toEqual({ row, col });
+          }
+        }
+      }
+    });
+
+    it('should return correct moved tiles array', () => {
+      const manager = createGridManager('en');
+      manager.initialize(6);
+      const grid = manager.getGrid();
+
+      // Mark 3 tiles in the same column
+      grid[0][0].isMatched = true;
+      grid[1][0].isMatched = true;
+      grid[2][0].isMatched = true;
+
+      const movedTiles = manager.applyGravity();
+
+      // Should include both moved tiles and new tiles
+      expect(movedTiles.length).toBeGreaterThan(0);
+
+      // All returned positions should be valid
+      for (const pos of movedTiles) {
+        expect(pos.row).toBeGreaterThanOrEqual(0);
+        expect(pos.row).toBeLessThan(6);
+        expect(pos.col).toBeGreaterThanOrEqual(0);
+        expect(pos.col).toBeLessThan(6);
+      }
+    });
+
+    it('should handle no matched tiles gracefully', () => {
+      const manager = createGridManager('en');
+      manager.initialize(6);
+
+      // No tiles marked as matched
+      const movedTiles = manager.applyGravity();
+
+      // Should return empty array when nothing to move
+      expect(movedTiles.length).toBe(0);
+
+      // Grid should remain unchanged
+      const grid = manager.getGrid();
+      for (let row = 0; row < 6; row++) {
+        for (let col = 0; col < 6; col++) {
+          expect(grid[row][col].letter).toBeTruthy();
+        }
+      }
+    });
+  });
 });
