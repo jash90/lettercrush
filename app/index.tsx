@@ -87,22 +87,6 @@
             color={colors.text.secondary}
             onPress={() => router.push('/settings')}
           />
-          {/* TEMPORARY: Test Sentry integration - remove after verification */}
-          <MenuButton
-            icon="alert-circle"
-            title={t('menu.testSentry.title')}
-            subtitle={t('menu.testSentry.subtitle')}
-            color="#FF4444"
-            onPress={async () => {
-              try {
-                Sentry.captureException(new Error('Test Sentry Error'));
-                await Sentry.flush();
-                Alert.alert('Sentry Test', 'Error sent to Sentry! Check your dashboard.');
-              } catch (error) {
-                Alert.alert('Sentry Test', `Failed to send: ${error}`);
-              }
-            }}
-          />
         </View>
       </Animated.View>
     </SafeAreaView>
