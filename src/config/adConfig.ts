@@ -18,15 +18,15 @@ const TEST_IDS = {
   },
 };
 
-// Production IDs (to be replaced with your actual AdMob IDs)
+// Production IDs
 const PRODUCTION_IDS = {
   banner: {
-    ios: 'YOUR_IOS_BANNER_ID',
-    android: 'YOUR_ANDROID_BANNER_ID',
+    ios: 'ca-app-pub-6050856662811628/8694265620',
+    android: 'ca-app-pub-6050856662811628/3937936429',
   },
   interstitial: {
-    ios: 'YOUR_IOS_INTERSTITIAL_ID',
-    android: 'YOUR_ANDROID_INTERSTITIAL_ID',
+    ios: 'ca-app-pub-6050856662811628/3441938949',
+    android: 'ca-app-pub-6050856662811628/2002888286',
   },
 };
 
@@ -34,8 +34,8 @@ const isDev = __DEV__;
 
 export const adConfig = {
   appId: {
-    ios: isDev ? 'ca-app-pub-3940256099942544~1458002511' : 'YOUR_IOS_APP_ID',
-    android: isDev ? 'ca-app-pub-3940256099942544~3347511713' : 'YOUR_ANDROID_APP_ID',
+    ios: isDev ? 'ca-app-pub-3940256099942544~1458002511' : 'ca-app-pub-6050856662811628~2596934594',
+    android: isDev ? 'ca-app-pub-3940256099942544~3347511713' : 'ca-app-pub-6050856662811628~5251018091',
   },
   unitIds: {
     banner: Platform.select({
