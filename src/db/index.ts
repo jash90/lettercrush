@@ -3,7 +3,7 @@
  */
 
 export { isWeb, isNative, platformName } from './platform';
-export { getDatabase, initDatabase, closeDatabase, isDictionarySeeded } from './database';
+export { initDatabase, closeDatabase, isDictionarySeeded } from './database';
 export {
   isValidWord,
   loadDictionary,

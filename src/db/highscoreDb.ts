@@ -1,12 +1,18 @@
 /**
  * Platform-Adaptive Highscore Database Operations
- * Uses localStorage on web, expo-sqlite on native
+ * Uses localStorage on web, MMKV on native
  */
 
 import { isWeb } from './platform';
-import { getDatabase } from './database';
 import type { HighScoreEntry } from '../types/game.types';
 import { logger } from '../utils/logger';
+import {
+  getHighscoresFromStorage,
+  addHighscoreToStorage,
+  saveHighscoresToStorage,
+  clearHighscoresStorage,
+  type StoredHighscore,
+} from './mmkvStorage';
 
 // LocalStorage key for web
 const HIGHSCORES_KEY = 'lettercrush_highscores';
@@ -61,15 +67,10 @@ export async function saveHighscore(score: number, moves: number = 0): Promise<n
     return newId;
   }
 
-  const database = getDatabase();
-  if (!database) return 0;
-
-  const result = await database.runAsync(
-    'INSERT INTO highscores (score, moves) VALUES (?, ?)',
-    [score, moves]
-  );
-  logger.log(`[Highscore] SQLite: Saved score ${score}`);
-  return result.lastInsertRowId;
+  // Native: Use MMKV
+  const newId = addHighscoreToStorage(score, moves);
+  logger.log(`[Highscore] MMKV: Saved score ${score}`);
+  return newId;
 }
 
 /**
@@ -88,25 +89,16 @@ export function getTopHighscores(limit: number = 10): HighScoreEntry[] {
       }));
   }
 
-  const database = getDatabase();
-  if (!database) return [];
-
-  interface HighscoreRow {
-    id: number;
-    score: number;
-    moves: number;
-    created_at: string;
-  }
-  const results = database.getAllSync(
-    'SELECT id, score, moves, created_at FROM highscores ORDER BY score DESC LIMIT ?',
-    [limit]
-  ) as HighscoreRow[];
-
-  return results.map((r: HighscoreRow) => ({
-    id: r.id,
-    score: r.score,
-    createdAt: r.created_at,
-  }));
+  // Native: Use MMKV
+  const highscores = getHighscoresFromStorage();
+  return highscores
+    .sort((a: StoredHighscore, b: StoredHighscore) => b.score - a.score)
+    .slice(0, limit)
+    .map((h: StoredHighscore) => ({
+      id: h.id,
+      score: h.score,
+      createdAt: h.createdAt,
+    }));
 }
 
 /**
@@ -119,13 +111,10 @@ export function getHighestScore(): number {
     return Math.max(...highscores.map(h => h.score));
   }
 
-  const database = getDatabase();
-  if (!database) return 0;
-
-  const result = database.getFirstSync(
-    'SELECT MAX(score) as max_score FROM highscores'
-  ) as { max_score: number } | null;
-  return result?.max_score ?? 0;
+  // Native: Use MMKV
+  const highscores = getHighscoresFromStorage();
+  if (highscores.length === 0) return 0;
+  return Math.max(...highscores.map((h: StoredHighscore) => h.score));
 }
 
 /**
@@ -144,13 +133,8 @@ export function getTotalGamesPlayed(): number {
     return getWebHighscores().length;
   }
 
-  const database = getDatabase();
-  if (!database) return 0;
-
-  const result = database.getFirstSync(
-    'SELECT COUNT(*) as count FROM highscores'
-  ) as { count: number } | null;
-  return result?.count ?? 0;
+  // Native: Use MMKV
+  return getHighscoresFromStorage().length;
 }
 
 /**
@@ -164,13 +148,11 @@ export function getAverageScore(): number {
     return Math.round(total / highscores.length);
   }
 
-  const database = getDatabase();
-  if (!database) return 0;
-
-  const result = database.getFirstSync(
-    'SELECT AVG(score) as avg_score FROM highscores'
-  ) as { avg_score: number } | null;
-  return Math.round(result?.avg_score ?? 0);
+  // Native: Use MMKV
+  const highscores = getHighscoresFromStorage();
+  if (highscores.length === 0) return 0;
+  const total = highscores.reduce((sum: number, h: StoredHighscore) => sum + h.score, 0);
+  return Math.round(total / highscores.length);
 }
 
 /**
@@ -183,9 +165,7 @@ export async function clearHighscores(): Promise<void> {
     return;
   }
 
-  const database = getDatabase();
-  if (!database) return;
-
-  await database.execAsync('DELETE FROM highscores');
-  logger.log('[Highscore] SQLite: Cleared all highscores');
+  // Native: Use MMKV
+  clearHighscoresStorage();
+  logger.log('[Highscore] MMKV: Cleared all highscores');
 }
