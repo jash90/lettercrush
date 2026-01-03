@@ -7,6 +7,31 @@ import { useGameStore } from '../gameStore';
 import { getGridManager, resetGridManager } from '../../engine/GridManager';
 import { getWordValidator } from '../../engine/WordValidator';
 
+// Mock Sentry before other imports
+jest.mock('@sentry/react-native', () => ({
+  captureException: jest.fn(),
+  captureMessage: jest.fn(),
+  init: jest.fn(),
+  wrap: jest.fn((component) => component),
+}));
+
+// Mock i18n to return translation keys with interpolated values
+jest.mock('../../i18n', () => ({
+  __esModule: true,
+  default: {
+    t: (key: string, options?: Record<string, unknown>) => {
+      const translations: Record<string, string> = {
+        'errors:validation.minLength': 'Word must be at least 3 letters',
+        'errors:validation.notAdjacent': 'Letters must be adjacent',
+        'errors:validation.invalidWordStrike': `"${options?.word}" is not a valid word. Strike ${options?.current}/${options?.max}`,
+        'errors:validation.invalidWordStrikeFinal': `"${options?.word}" is not a valid word. Strike ${options?.current}/${options?.max}!`,
+        'errors:validation.genericError': 'An error occurred. Please try again.',
+      };
+      return translations[key] || key;
+    },
+  },
+}));
+
 // Mock dependencies
 jest.mock('../../engine/GridManager');
 jest.mock('../../engine/WordValidator');
@@ -55,6 +80,8 @@ describe('GameStore', () => {
       isInitialized: false,
       isDictionaryReady: true, // Enable dictionary for testing
       lastBlockedAction: null,
+      strikes: 0,
+      maxStrikes: 3,
     });
 
     (getGridManager as jest.Mock).mockReturnValue({
@@ -167,7 +194,7 @@ describe('GameStore', () => {
       expect(state.phase).toBe('idle');
     });
 
-    it('rejects invalid words', async () => {
+    it('rejects invalid words and adds strike', async () => {
       (getWordValidator as jest.Mock).mockReturnValue({
         isValidWord: jest.fn().mockReturnValue(false),
       });
@@ -175,7 +202,8 @@ describe('GameStore', () => {
       await useGameStore.getState().submitWord();
 
       const state = useGameStore.getState();
-      expect(state.lastValidationError).toBe('"CAT" is not a valid word');
+      expect(state.lastValidationError).toBe('"CAT" is not a valid word. Strike 1/3');
+      expect(state.strikes).toBe(1);
       expect(state.phase).toBe('idle');
     });
 

@@ -12,6 +12,7 @@ import Animated, {
   withTiming,
   useSharedValue,
 } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { colors, spacing, borderRadius, fontSize } from '../../theme';
 
 interface ScoreDisplayProps {
@@ -37,6 +38,7 @@ export const ScoreDisplay = memo(function ScoreDisplay({
   strikes,
   maxStrikes,
 }: ScoreDisplayProps) {
+  const { t } = useTranslation('game');
   const scoreScale = useSharedValue(1);
 
   // Memoize animation trigger to fix dependency issue
@@ -73,7 +75,7 @@ export const ScoreDisplay = memo(function ScoreDisplay({
       {/* Timer display */}
       {formattedTime !== undefined && (
         <View style={styles.stat}>
-          <Text style={styles.statLabel}>TIME</Text>
+          <Text style={styles.statLabel}>{t('stats.time')}</Text>
           <Text
             style={[
               styles.statValue,
@@ -87,7 +89,7 @@ export const ScoreDisplay = memo(function ScoreDisplay({
       )}
 
       <View style={styles.mainScore}>
-        <Text style={styles.label}>SCORE</Text>
+        <Text style={styles.label}>{t('stats.score')}</Text>
         <Animated.Text style={[styles.score, scoreAnimatedStyle]}>
           {formatScore(score)}
         </Animated.Text>
@@ -96,7 +98,7 @@ export const ScoreDisplay = memo(function ScoreDisplay({
       {/* Strikes display */}
       {strikes !== undefined && maxStrikes !== undefined && (
         <View style={styles.stat}>
-          <Text style={styles.statLabel}>STRIKES</Text>
+          <Text style={styles.statLabel}>{t('stats.strikes')}</Text>
           <Text
             style={[
               styles.statValue,

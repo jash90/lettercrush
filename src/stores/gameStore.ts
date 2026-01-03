@@ -17,6 +17,7 @@ import { getWordValidator } from '../engine/WordValidator';
 import { getGameOrchestrator } from '../services/GameOrchestrator';
 import { saveHighscore } from '../db';
 import { logger } from '../utils/logger';
+import i18n from '../i18n';
 
 // Blocked action feedback type
 export interface BlockedAction {
@@ -211,13 +212,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // Block with feedback during non-idle phases
     if (phase !== 'idle') {
       const reasonMap: Record<GamePhase, string> = {
-        'validating': 'Please wait, checking word...',
-        'matching': 'Please wait, matching in progress...',
-        'cascading': 'Please wait, tiles are falling...',
-        'refilling': 'Please wait, refilling grid...',
-        'paused': 'Game is paused',
-        'gameOver': 'Game is over',
-        'selecting': 'Selection in progress',
+        'validating': i18n.t('errors:blocked.selection.validating'),
+        'matching': i18n.t('errors:blocked.selection.matching'),
+        'cascading': i18n.t('errors:blocked.selection.cascading'),
+        'refilling': i18n.t('errors:blocked.selection.refilling'),
+        'paused': i18n.t('errors:blocked.selection.paused'),
+        'gameOver': i18n.t('errors:blocked.selection.gameOver'),
+        'selecting': i18n.t('errors:blocked.selection.selecting'),
         'idle': '',
       };
 
@@ -237,7 +238,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({
         lastBlockedAction: {
           type: 'selection',
-          reason: 'Loading dictionary...',
+          reason: i18n.t('errors:blocked.dictionary.loading'),
           timestamp: Date.now(),
         },
       });
@@ -264,7 +265,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         const manager = getGridManager();
         if (!manager.areAdjacent(lastSelected, position)) {
           // Not adjacent to the last selected letter
-          set({ lastValidationError: 'Letters must be adjacent' });
+          set({ lastValidationError: i18n.t('errors:validation.notAdjacent') });
           return;
         }
       }
@@ -299,13 +300,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // Block with feedback during non-idle phases
     if (phase !== 'idle') {
       const reasonMap: Record<GamePhase, string> = {
-        'validating': 'Already checking word...',
-        'matching': 'Processing match...',
-        'cascading': 'Tiles falling...',
-        'refilling': 'Refilling grid...',
-        'paused': 'Game is paused',
-        'gameOver': 'Game is over',
-        'selecting': 'Selection in progress',
+        'validating': i18n.t('errors:blocked.submission.validating'),
+        'matching': i18n.t('errors:blocked.submission.matching'),
+        'cascading': i18n.t('errors:blocked.submission.cascading'),
+        'refilling': i18n.t('errors:blocked.submission.refilling'),
+        'paused': i18n.t('errors:blocked.submission.paused'),
+        'gameOver': i18n.t('errors:blocked.submission.gameOver'),
+        'selecting': i18n.t('errors:blocked.submission.selecting'),
         'idle': '',
       };
 
@@ -325,7 +326,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({
         lastBlockedAction: {
           type: 'submission',
-          reason: 'Dictionary loading...',
+          reason: i18n.t('errors:blocked.dictionary.notReady'),
           timestamp: Date.now(),
         },
       });
@@ -337,7 +338,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ lastBlockedAction: null });
 
     if (selectedLetters.length < 3) {
-      set({ lastValidationError: 'Word must be at least 3 letters' });
+      set({ lastValidationError: i18n.t('errors:validation.minLength') });
       return;
     }
 
@@ -361,7 +362,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
             strikes: newStrikes,
             gameOverReason: 'strikes',
             isTimerRunning: false,
-            lastValidationError: `"${currentWord}" is not a valid word. Strike ${newStrikes}/${maxStrikes}!`,
+            lastValidationError: i18n.t('errors:validation.invalidWordStrikeFinal', { word: currentWord, current: newStrikes, max: maxStrikes }),
           });
           // Save highscore
           if (score > 0) {
@@ -373,7 +374,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           set({
             phase: 'idle',
             strikes: newStrikes,
-            lastValidationError: `"${currentWord}" is not a valid word. Strike ${newStrikes}/${maxStrikes}`,
+            lastValidationError: i18n.t('errors:validation.invalidWordStrike', { word: currentWord, current: newStrikes, max: maxStrikes }),
           });
         }
         return;
@@ -387,7 +388,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       logger.error('[submitWord] Error during submission:', error);
       set({
         phase: 'idle',
-        lastValidationError: 'An error occurred. Please try again.',
+        lastValidationError: i18n.t('errors:validation.genericError'),
       });
     }
   },

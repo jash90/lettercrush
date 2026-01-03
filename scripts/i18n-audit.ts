@@ -81,7 +81,7 @@ const SKIP_PATTERNS = [
   /^#[0-9a-fA-F]+$/, // Hex colors
   /^\s*$/, // Whitespace only
   /^[a-z]+(-[a-z]+)*$/, // CSS class names (lowercase-hyphenated)
-  /^[A-Z_]+$/, // Constants (ALL_CAPS)
+  /^[A-Z][A-Z0-9]*(_[A-Z0-9]+)+$/, // Constants (ALL_CAPS_WITH_UNDERSCORES like MAX_RETRIES)
   /^\/.*$/, // Paths starting with /
   /^https?:\/\//, // URLs
   /^\.\.\.$/, // Ellipsis
