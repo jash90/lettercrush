@@ -10,8 +10,9 @@ import { Stack, router, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { StyleSheet, View, ActivityIndicator, Text } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, Text, Platform } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
+import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
 import { useLanguageStore } from '../src/stores/languageStore';
 import { seedDictionaryIfNeeded } from '../src/services/dictionarySeeder';
@@ -85,8 +86,14 @@ export default function RootLayout() {
 
     setIsReady(true);
 
-    // Initialize ad service after app is ready
-    getAdService().initialize();
+    // Request ATT permission on iOS before initializing ads
+    const initializeAds = async () => {
+      if (Platform.OS === 'ios') {
+        await requestTrackingPermissionsAsync();
+      }
+      getAdService().initialize();
+    };
+    initializeAds();
   }, [isLoaded, isFirstRun, isDictionaryLoaded, segments]);
 
   // Show loading screen while checking first-run status or loading dictionary

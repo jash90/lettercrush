@@ -4,9 +4,9 @@
  * Styled to match the "Nighttime Candy" theme
  */
 
-import React, { memo, useState } from 'react';
+import React, { memo, useState, useRef } from 'react';
 import { View, StyleSheet, Text, Platform } from 'react-native';
-import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
+import { BannerAd, BannerAdSize, useForeground } from 'react-native-google-mobile-ads';
 import { colors, spacing } from '../../theme';
 import { adConfig } from '../../config/adConfig';
 
@@ -21,6 +21,13 @@ export const AdBanner = memo(function AdBanner({
 }: AdBannerProps) {
   const [hasError, setHasError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const bannerRef = useRef<BannerAd>(null);
+
+  // iOS: Reload ad when app returns to foreground
+  // WKWebView can terminate when app is suspended, causing empty banner
+  useForeground(() => {
+    Platform.OS === 'ios' && bannerRef.current?.load();
+  });
 
   // Don't render if not visible or if there was an error
   if (!visible || hasError) {
@@ -40,6 +47,7 @@ export const AdBanner = memo(function AdBanner({
       accessibilityRole="none"
     >
       <BannerAd
+        ref={bannerRef}
         unitId={adConfig.unitIds.banner}
         size={BannerAdSize.BANNER}
         requestOptions={adConfig.banner.requestOptions}
